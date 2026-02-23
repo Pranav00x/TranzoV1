@@ -1,130 +1,139 @@
 package com.antigravity.cryptowallet.ui.onboarding
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.antigravity.cryptowallet.ui.theme.PrimaryVariant
-import com.antigravity.cryptowallet.ui.theme.SecondaryVariant
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
     onNavigateNext: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "alpha"
-    )
-
+    var startAnimation by remember { mutableStateOf(false) }
+    
+    // Decrypting Text Effect
+    val targetText = "FLOWSTABLE"
+    var displayedText by remember { mutableStateOf("") }
+    val characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+    
     LaunchedEffect(Unit) {
-        delay(2500)
+        startAnimation = true
+        
+        // Decrypt text
+        var ticks = 0
+        while (ticks < 20) {
+            displayedText = (0 until targetText.length).map { 
+                characters.random() 
+            }.joinToString("")
+            delay(50)
+            ticks++
+        }
+        
+        // Reveal text one by one
+        for (i in 1..targetText.length) {
+            displayedText = targetText.take(i) + (0 until (targetText.length - i)).map { 
+                characters.random() 
+            }.joinToString("")
+            delay(50)
+        }
+        
+        delay(1000)
         onNavigateNext()
     }
+
+    // Background Grid Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "grid")
+    val offsetY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 100f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "offset"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(Color.Black), // Techy Dark Background
         contentAlignment = Alignment.Center
     ) {
-        // Soft Glow Background
-        Canvas(modifier = Modifier.fillMaxSize().blur(80.dp)) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(PrimaryVariant.copy(alpha = 0.3f), Color.Transparent),
-                    center = center,
-                    radius = size.minDimension
-                ),
-                center = center,
-                radius = size.minDimension
-            )
+        // Grid Background
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().alpha(0.2f)) {
+            val step = 40.dp.toPx()
+            for (x in 0..size.width.toInt() step step.toInt()) {
+                drawLine(
+                    color = Color.Green,
+                    start = androidx.compose.ui.geometry.Offset(x.toFloat(), 0f),
+                    end = androidx.compose.ui.geometry.Offset(x.toFloat(), size.height),
+                    strokeWidth = 1f
+                )
+            }
+            for (y in 0..size.height.toInt() step step.toInt()) {
+                val animatedY = (y + offsetY) % size.height
+                drawLine(
+                    color = Color.Green,
+                    start = androidx.compose.ui.geometry.Offset(0f, animatedY),
+                    end = androidx.compose.ui.geometry.Offset(size.width, animatedY),
+                    strokeWidth = 1f
+                )
+            }
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                // Pulse Effect
+            // Hexagon/Tech Logo Placeholder
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .border(2.dp, Color.Green, RoundedCornerShape(20.dp))
+                    .rotate(45f),
+                contentAlignment = Alignment.Center
+            ) {
                 Box(
                     modifier = Modifier
-                        .size(120.dp)
-                        .scale(pulseScale)
-                        .alpha(pulseAlpha)
-                        .background(PrimaryVariant, CircleShape)
+                        .size(60.dp)
+                        .background(Color.Green.copy(alpha = 0.2f))
+                        .border(1.dp, Color.Green, RoundedCornerShape(10.dp))
                 )
-                
-                // Logo
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(
-                            Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant)),
-                            CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "F",
-                        color = Color.White,
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Black
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
+            // Decrypting Text
             Text(
-                text = "FLOWSTABLE",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 8.sp,
-                modifier = Modifier.alpha(0.9f)
+                text = displayedText,
+                style = MaterialTheme.typography.displayMedium,
+                color = Color.Green,
+                fontWeight = FontWeight.Bold,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                letterSpacing = 4.sp
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Secure • Fluid • Private",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White.copy(alpha = 0.5f),
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 2.sp
+                text = "SYSTEM READY",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Green.copy(alpha = 0.5f),
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             )
         }
     }

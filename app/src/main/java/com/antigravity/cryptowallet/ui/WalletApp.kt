@@ -1,8 +1,6 @@
 package com.antigravity.cryptowallet.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -26,16 +24,16 @@ fun WalletApp(
         navController = navController, 
         startDestination = "splash",
         enterTransition = {
-            scaleIn(initialScale = 0.9f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(400))
+            androidx.compose.animation.slideInHorizontally(initialOffsetX = { it }) + androidx.compose.animation.fadeIn()
         },
         exitTransition = {
-            scaleOut(targetScale = 1.1f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(400))
+            androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -it }) + androidx.compose.animation.fadeOut()
         },
         popEnterTransition = {
-            scaleIn(initialScale = 1.1f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(400))
+            androidx.compose.animation.slideInHorizontally(initialOffsetX = { -it }) + androidx.compose.animation.fadeIn()
         },
         popExitTransition = {
-            scaleOut(targetScale = 0.9f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(400))
+            androidx.compose.animation.slideOutHorizontally(targetOffsetX = { it }) + androidx.compose.animation.fadeOut()
         }
     ) {
         composable("splash") {

@@ -148,8 +148,8 @@ fun TokenDetailScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Price
-        Text("Current Price", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(price, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text("Current Price", fontSize = 12.sp, color = Color.Gray)
+        Text(price, fontSize = 48.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onBackground)
         
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -158,27 +158,27 @@ fun TokenDetailScreen(
             Text(
                 text = "Balance: ",
                 fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = viewModel.balance,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
         
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Graph Section
         val ohlc = viewModel.ohlcData
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface)
+                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(12.dp)
         ) {
             if (ohlc.isNotEmpty()) {
@@ -238,17 +238,17 @@ fun TokenDetailScreen(
 
         // Contract Address
         if (contractAddress.isNotEmpty()) {
-            Text("Contract Address", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text("Contract Address", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(8.dp))
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { clipboardManager.setText(AnnotatedString(contractAddress)) }
-                    .padding(16.dp)
+                    .padding(12.dp)
             ) {
                 Text(
                     text = contractAddress,
@@ -303,38 +303,31 @@ fun TokenDetailScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         // History
-        Text("Transaction History", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+        Text("Transaction History", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(16.dp))
         
         if (transactions.isEmpty()) {
-            Text("No transactions found", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+            Text("No transactions found", color = Color.Gray, fontSize = 12.sp)
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-            ) {
-                transactions.forEachIndexed { index, tx ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(if (tx.type == "send") "Sent" else "Received", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tx.hash.take(8) + "...", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("${tx.value} $symbol", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tx.status, fontSize = 12.sp, color = if (tx.status == "success") Color(0xFF10B981) else Color.Red)
-                        }
+            transactions.forEach { tx ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(if (tx.type == "send") "Sent" else "Received", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tx.hash.take(8) + "...", fontSize = 10.sp, color = Color.Gray)
                     }
-                    if (index < transactions.size - 1) {
-                        Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("${tx.value} $symbol", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tx.status, fontSize = 10.sp, color = if (tx.status == "success") Color(0xFF00C853) else Color.Red)
                     }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
         

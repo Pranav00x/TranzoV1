@@ -109,13 +109,21 @@ fun LockScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Icon
-            Icon(
-                Icons.Default.Fingerprint,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            // Logo/Icon Area
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🔐",
+                    fontSize = 36.sp
+                )
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -272,7 +280,13 @@ fun NumpadButton(
             .size(72.dp)
             .scale(scale)
             .clip(CircleShape)
-            .background(Color.Transparent)
+            .background(
+                when (label) {
+                    "Bio", "Del" -> Color.Transparent
+                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                },
+                CircleShape
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null

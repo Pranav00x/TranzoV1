@@ -1,24 +1,33 @@
 package com.antigravity.cryptowallet.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.antigravity.cryptowallet.ui.components.FluidHeader
+import com.antigravity.cryptowallet.ui.components.BrutalistHeader
+import com.antigravity.cryptowallet.ui.theme.BrutalBlack
+import com.antigravity.cryptowallet.ui.theme.BrutalWhite
 
 @Composable
 fun SettingsScreen(
@@ -35,12 +44,11 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
             .padding(16.dp)
     ) {
-        FluidHeader("Settings")
+        BrutalistHeader("Settings")
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item {
@@ -82,13 +90,13 @@ fun SettingsScreen(
                 SettingsItem(
                     title = "Wallet Connect",
                     subtitle = "Connect to dApps",
-                    icon = Icons.Default.QrCodeScanner,
+                    icon = Icons.Filled.QrCodeScanner,
                     onClick = onWalletConnect
                 )
                 SettingsItem(
                     title = "Appearance",
                     subtitle = "Themes & Fonts",
-                    icon = Icons.Default.Palette,
+                    icon = Icons.Default.Edit,
                     onClick = onAppearance
                 )
                 SettingsItem(
@@ -105,11 +113,11 @@ fun SettingsScreen(
 @Composable
 fun SettingsSection(title: String) {
     Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+        text = title.uppercase(),
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
+        color = androidx.compose.ui.graphics.Color.Gray,
+        modifier = Modifier.padding(bottom = 8.dp)
     )
 }
 
@@ -120,53 +128,37 @@ fun SettingsItem(
     icon: ImageVector,
     onClick: () -> Unit
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon, 
-                        contentDescription = null, 
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = title, 
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold, 
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = subtitle, 
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), androidx.compose.foundation.shape.CircleShape)
+                    .clip(androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon, 
+                    contentDescription = null, 
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(20.dp)
+                )
             }
-            Icon(
-                imageVector = Icons.Default.ChevronRight, 
-                contentDescription = null, 
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                modifier = Modifier.size(20.dp)
-            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(text = title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(text = subtitle, fontSize = 12.sp, color = androidx.compose.ui.graphics.Color.Gray)
+            }
         }
+        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground)
     }
 }
