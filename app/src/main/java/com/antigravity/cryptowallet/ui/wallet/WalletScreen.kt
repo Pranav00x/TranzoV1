@@ -1,7 +1,6 @@
 package com.antigravity.cryptowallet.ui.wallet
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -173,13 +173,15 @@ fun WalletScreen(
         ) {
             // BALANCE CARD
             item {
-                Surface(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .shadow(24.dp, RoundedCornerShape(28.dp)),
-                    shape = RoundedCornerShape(28.dp),
-                    brush = Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant))
+                        .shadow(24.dp, RoundedCornerShape(28.dp))
+                        .background(
+                            Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant)),
+                            RoundedCornerShape(28.dp)
+                        )
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize().padding(28.dp),
