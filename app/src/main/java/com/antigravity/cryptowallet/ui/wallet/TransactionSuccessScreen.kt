@@ -72,10 +72,10 @@ fun TransactionResultScreen(
         label = "Icon"
     ) { if (it) 1f else 0f }
 
-    // Modern Dark Theme Colors
-    val successColor = Color(0xFF00E676) // Bright Green
-    val errorColor = Color(0xFFFF5252)   // Bright Red
-    val warningColor = Color(0xFFFFC400) // Amber
+    // Modern Minimal Theme Colors
+    val successColor = Color(0xFF10B981)
+    val errorColor = Color(0xFFEF4444)
+    val warningColor = Color(0xFFF59E0B)
     
     val primaryColor = when(status) {
         TransactionStatus.SUCCESS -> successColor
@@ -83,9 +83,9 @@ fun TransactionResultScreen(
         TransactionStatus.PENDING -> warningColor
     }
     
-    val backgroundColor = Color(0xFF121212) // Deep Dark Background
-    val cardBackgroundColor = Color(0xFF1E1E1E) // Slightly lighter for cards
-    val contentColor = Color.White
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val cardBackgroundColor = MaterialTheme.colorScheme.surface
+    val contentColor = MaterialTheme.colorScheme.onBackground
     
     val clipboardManager = LocalClipboardManager.current
     val uriHandler = LocalUriHandler.current
@@ -226,7 +226,8 @@ fun TransactionResultScreen(
                 // Details Card
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -242,16 +243,16 @@ fun TransactionResultScreen(
                             onCopy = { clipboardManager.setText(AnnotatedString(recipient)) }
                         )
 
-                        Divider(color = Color.White.copy(alpha = 0.05f))
+                        Divider(color = MaterialTheme.colorScheme.outline)
 
                         // Network Item
                         DetailRow(
                            label = "Network",
                             value = networkName,
-                            valueColor = contentColor.copy(alpha = 0.9f)
+                            valueColor = contentColor
                         )
 
-                        Divider(color = Color.White.copy(alpha = 0.05f))
+                        Divider(color = MaterialTheme.colorScheme.outline)
 
                         // Hash Item
                         DetailRow(
@@ -272,10 +273,10 @@ fun TransactionResultScreen(
         // Done Button
         Box(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
             BrutalistButton(
-                text = "DONE",
+                text = "Done",
                 onClick = onDone,
-                textColor = if(status == TransactionStatus.SUCCESS) Color.Black else Color.White,
-                backgroundColor = primaryColor,
+                textColor = MaterialTheme.colorScheme.onPrimary,
+                backgroundColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -310,7 +311,7 @@ fun DetailRow(
         Text(
             text = label,
             fontSize = 14.sp,
-            color = Color.White.copy(alpha = 0.5f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Normal
         )
         
@@ -336,8 +337,8 @@ fun DetailRow(
                     Icon(
                         Icons.Default.ContentCopy,
                         contentDescription = "Copy",
-                        tint = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.size(14.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -347,7 +348,7 @@ fun DetailRow(
                  Icon(
                     Icons.Default.OpenInNew,
                     contentDescription = "Open",
-                    tint = Color.Blue.copy(alpha = 0.8f), // Specific link color
+                    tint = MaterialTheme.colorScheme.primary, // Specific link color
                     modifier = Modifier
                         .size(16.dp)
                         .clickable { onLink.invoke() }

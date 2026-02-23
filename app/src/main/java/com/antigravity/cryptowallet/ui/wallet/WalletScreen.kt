@@ -144,36 +144,35 @@ fun WalletScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = viewModel.activeNetwork.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
                     )
+                    Spacer(Modifier.width(4.dp))
                     Icon(
                         Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Text(
                     text = "Connected • ${viewModel.address.take(6)}...${viewModel.address.takeLast(4)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
             Row {
                 IconButton(
-                    onClick = { viewModel.refresh() },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape).size(40.dp)
+                    onClick = { viewModel.refresh() }
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(4.dp))
                 IconButton(
-                    onClick = onSetupSecurity,
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape).size(40.dp)
+                    onClick = onSetupSecurity
                 ) {
-                    Icon(Icons.Default.Shield, contentDescription = "Security", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Shield, contentDescription = "Security", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -186,38 +185,25 @@ fun WalletScreen(
         ) {
             // BALANCE CARD
             item {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                        .shadow(24.dp, RoundedCornerShape(28.dp))
-                        .background(
-                            Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant)),
-                            RoundedCornerShape(28.dp)
-                        )
+                        .padding(vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(28.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text("Total Balance", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                text = viewModel.totalBalanceUsd,
-                                style = MaterialTheme.typography.displayLarge,
-                                color = Color.White,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        }
-                        
-                        Text(
-                            text = "Main Wallet Assets",
-                            color = Color.White.copy(alpha = 0.5f),
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
+                    Text(
+                        text = "Total Balance",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = viewModel.totalBalanceUsd,
+                        style = MaterialTheme.typography.displayLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Spacer(Modifier.height(24.dp))
             }
 
             // ACTIONS
@@ -247,14 +233,13 @@ fun WalletScreen(
             // ASSETS HEADER
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         "Assets",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge
                     )
                     TextButton(onClick = { showAddTokenDialog = true }) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -262,51 +247,50 @@ fun WalletScreen(
                         Text("Add Token", style = MaterialTheme.typography.labelLarge)
                     }
                 }
-                Spacer(Modifier.height(16.dp))
+                Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
             }
 
             // ASSET LIST
             items(viewModel.assets) { asset ->
-                Surface(
-                    onClick = { onNavigateToTokenDetail(asset.symbol) },
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 2.dp
+                        .clickable { onNavigateToTokenDetail(asset.symbol) }
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Coin Icon
                         Box(
                             modifier = Modifier
-                                .size(48.dp)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), CircleShape),
+                                .size(40.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 asset.symbol.take(1),
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.bodyLarge
                             )
                         }
                         
                         Spacer(Modifier.width(16.dp))
                         
                         Column(Modifier.weight(1f)) {
-                            Text(asset.symbol, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                            Text(asset.networkName.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Text(asset.symbol, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                            Text(asset.networkName.uppercase(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(asset.balanceUsd, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                            Text(asset.balance, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(asset.balanceUsd, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                            Text(asset.balance, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
+                    Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
                 }
             }
         }

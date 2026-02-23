@@ -1,36 +1,22 @@
 package com.antigravity.cryptowallet.ui.components
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.antigravity.cryptowallet.ui.theme.PrimaryVariant
-import com.antigravity.cryptowallet.ui.theme.SecondaryVariant
 
 @Composable
 fun FluidButton(
@@ -40,56 +26,40 @@ fun FluidButton(
     enabled: Boolean = true,
     icon: ImageVector? = null,
     backgroundColor: Color? = null,
-    textColor: Color = Color.White
+    textColor: Color? = null
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.96f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "buttonScale"
-    )
+    val isOutline = backgroundColor == MaterialTheme.colorScheme.surface || backgroundColor == Color.White || backgroundColor == Color.Transparent
+    val btnColor = if (isOutline) Color.Transparent else (backgroundColor ?: MaterialTheme.colorScheme.primary)
+    val txtColor = textColor ?: if (isOutline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
 
-    val gradient = Brush.linearGradient(
-        colors = listOf(PrimaryVariant, SecondaryVariant)
-    )
-
-    Surface(
+    Button(
         onClick = onClick,
         enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = btnColor,
+            contentColor = txtColor,
+            disabledContainerColor = if (isOutline) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent,
-        interactionSource = interactionSource
+            .height(52.dp)
+            .then(
+                if (isOutline) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                else Modifier
+            ),
+        contentPadding = PaddingValues(horizontal = 24.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .background(if (enabled) gradient else Brush.linearGradient(listOf(Color.Gray, Color.DarkGray)))
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) {
-                    Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                }
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = textColor,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                )
-            }
+        if (icon != null) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
         }
+        Text(
+            text = text,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
     }
 }
 
@@ -104,55 +74,24 @@ fun FluidTextField(
     singleLine: Boolean = true,
     leadingIcon: ImageVector? = null
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-    
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) PrimaryVariant else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-        label = "borderFade"
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) } },
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            cursorColor = MaterialTheme.colorScheme.primary
+        ),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        singleLine = singleLine,
+        modifier = modifier.fillMaxWidth()
     )
-
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, borderColor)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (leadingIcon != null) {
-                Icon(
-                    leadingIcon, 
-                    contentDescription = null, 
-                    tint = if (isFocused) PrimaryVariant else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-            }
-            
-            Box(Modifier.weight(1f)) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    )
-                }
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                    keyboardOptions = keyboardOptions,
-                    keyboardActions = keyboardActions,
-                    singleLine = singleLine,
-                    cursorBrush = SolidColor(PrimaryVariant),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
 }
 
 @Composable
@@ -164,18 +103,13 @@ fun FluidCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(24.dp)
-            ),
-        shape = RoundedCornerShape(24.dp),
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
         onClick = onClick ?: {},
         enabled = onClick != null
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             content()
         }
     }
@@ -185,10 +119,9 @@ fun FluidCard(
 fun FluidHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = MaterialTheme.typography.displayMedium.copy(
-            brush = Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant))
-        ),
-        modifier = modifier.padding(bottom = 24.dp)
+        style = MaterialTheme.typography.displayMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.padding(bottom = 16.dp)
     )
 }
 
@@ -205,46 +138,47 @@ fun FluidBottomBar(
     onItemClick: (String) -> Unit
 ) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .shadow(20.dp, CircleShape),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .height(64.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            items.forEach { item ->
-                val isSelected = currentRoute == item.route
-                
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { onItemClick(item.route) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column {
+            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+            Row(
+                modifier = Modifier
+                    .padding(vertical = 4.dp, horizontal = 16.dp)
+                    .height(64.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEach { item ->
+                    val isSelected = currentRoute == item.route
+                    val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    
+                    Column(
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { onItemClick(item.route) }
+                            )
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Icon(
                             imageVector = item.icon,
                             contentDescription = item.title,
-                            tint = if (isSelected) PrimaryVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            tint = color,
                             modifier = Modifier.size(24.dp)
                         )
-                        if (isSelected) {
-                            Box(
-                                Modifier
-                                    .padding(top = 4.dp)
-                                    .size(4.dp)
-                                    .background(PrimaryVariant, CircleShape)
-                            )
-                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = item.title,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                            color = color
+                        )
                     }
                 }
             }
@@ -265,7 +199,7 @@ fun BrutalistButton(
     textColor: Color? = null
 ) {
     val defaultBg = if (inverted) MaterialTheme.colorScheme.surface else backgroundColor
-    val defaultText = if (inverted) MaterialTheme.colorScheme.primary else (textColor ?: Color.White)
+    val defaultText = if (inverted) MaterialTheme.colorScheme.primary else textColor
     FluidButton(text, onClick, modifier, enabled, icon, defaultBg, defaultText)
 }
 
