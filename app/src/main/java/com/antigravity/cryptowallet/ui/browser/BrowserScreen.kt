@@ -507,8 +507,7 @@ fun NetworkSelector(
                 BrutalistButton(
                     text = "Cancel",
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    inverted = true
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

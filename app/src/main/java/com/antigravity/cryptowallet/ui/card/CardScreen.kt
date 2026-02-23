@@ -18,9 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.antigravity.cryptowallet.ui.components.BrutalistButton
 import com.antigravity.cryptowallet.ui.components.BrutalistHeader
-import com.antigravity.cryptowallet.ui.components.BrutalistInfoRow
+import com.antigravity.cryptowallet.ui.components.FluidButton
 
 @Composable
 fun CardScreen(
@@ -150,20 +149,22 @@ fun CardScreen(
             val freezeIcon = if (viewModel.isCardFrozen) Icons.Default.LockOpen else Icons.Default.Lock
             
             Box(modifier = Modifier.weight(1f)) {
-                BrutalistButton(
+                FluidButton(
                     text = freezeLabel,
                     onClick = { viewModel.toggleFreeze() },
                     icon = freezeIcon,
-                    inverted = !viewModel.isCardFrozen
+                    backgroundColor = if (!viewModel.isCardFrozen) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
+                    textColor = if (!viewModel.isCardFrozen) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
                 )
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                BrutalistButton(
+                FluidButton(
                     text = if (viewModel.showSensitiveData) "Hide" else "Reveal",
                     onClick = { viewModel.toggleSensitiveData() },
                     icon = if (viewModel.showSensitiveData) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    inverted = true
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    textColor = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -171,7 +172,7 @@ fun CardScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Spending Limit Info
-        BrutalistInfoRow(label = "Spending Limit", value = viewModel.spendingLimitUsd)
+        CardInfoRow(label = "Spending Limit", value = viewModel.spendingLimitUsd)
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -185,7 +186,7 @@ fun CardScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        BrutalistButton(
+        FluidButton(
             text = "Add to Google Pay",
             onClick = { /* Simulated */ },
             icon = Icons.Default.AddCard,
@@ -193,5 +194,17 @@ fun CardScreen(
         )
         
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun CardInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
+        Text(value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
     }
 }

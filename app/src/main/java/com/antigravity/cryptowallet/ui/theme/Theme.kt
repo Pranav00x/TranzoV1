@@ -19,6 +19,10 @@ val BackgroundDark = Color(0xFF0F172A) // Slate 900
 val SurfaceDark = Color(0xFF1E293B) // Slate 800
 val CardDark = Color(0xFF334155) // Slate 700
 
+// Legacy Brutalist Colors (Kept for compatibility)
+val BrutalBlack = Color(0xFF000000)
+val BrutalWhite = Color(0xFFFFFFFF)
+
 enum class ThemeType {
     DEFAULT, DARK, MIDNIGHT, OCEAN, FOREST, CRIMSON, VIOLET, SUNSET
 }

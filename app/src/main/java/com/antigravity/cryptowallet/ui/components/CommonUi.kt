@@ -254,8 +254,19 @@ fun FluidBottomBar(
 
 // Backwards compatibility wrappers
 @Composable
-fun BrutalistButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
-    FluidButton(text, onClick, modifier, icon = icon)
+fun BrutalistButton(
+    text: String, 
+    onClick: () -> Unit, 
+    modifier: Modifier = Modifier, 
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    inverted: Boolean = false,
+    backgroundColor: Color? = null,
+    textColor: Color? = null
+) {
+    val defaultBg = if (inverted) MaterialTheme.colorScheme.surface else backgroundColor
+    val defaultText = if (inverted) MaterialTheme.colorScheme.primary else (textColor ?: Color.White)
+    FluidButton(text, onClick, modifier, enabled, icon, defaultBg, defaultText)
 }
 
 @Composable

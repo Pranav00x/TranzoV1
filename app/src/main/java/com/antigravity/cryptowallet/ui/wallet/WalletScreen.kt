@@ -105,6 +105,14 @@ class WalletViewModel @Inject constructor(
         val total = allAssets.sumOf { it.rawBalance * it.price }
         totalBalanceUsd = String.format("$%.2f", total)
     }
+    
+    suspend fun sendAsset(asset: com.antigravity.cryptowallet.data.models.AssetUiModel, toAddress: String, amount: String): String? {
+        return try {
+            assetRepository.sendAsset(asset, toAddress, amount)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
 
 @Composable
