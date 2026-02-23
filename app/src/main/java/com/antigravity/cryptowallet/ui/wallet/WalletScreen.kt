@@ -177,7 +177,7 @@ fun WalletScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .shadow(24.dp, RoundedCornerShape(28.dp), ambientColor = PrimaryVariant.copy(alpha = 0.5f)),
+                        .shadow(24.dp, RoundedCornerShape(28.dp)),
                     shape = RoundedCornerShape(28.dp),
                     brush = Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant))
                 ) {

@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -161,15 +162,17 @@ fun FluidCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp), ambientColor = Color.Black.copy(alpha = 0.1f)),
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(24.dp)
+            ),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
         onClick = onClick ?: {},
         enabled = onClick != null
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            content = content
+            modifier = Modifier.padding(20.dp)
         ) {
             content()
         }

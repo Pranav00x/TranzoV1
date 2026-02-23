@@ -43,7 +43,7 @@ fun MainScreen(
 
     val items = listOf(
         BottomNavItem("Wallet", Icons.Filled.Home, "wallet"),
-        BottomNavItem("Card", Icons.Expanded.CreditCard, "card"),
+        BottomNavItem("Card", Icons.Filled.CreditCard, "card"),
         BottomNavItem("Browser", Icons.Filled.Public, "browser"),
         BottomNavItem("History", Icons.Filled.History, "history"),
         BottomNavItem("Settings", Icons.Filled.Settings, "settings")
