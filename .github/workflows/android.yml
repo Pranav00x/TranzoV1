@@ -39,28 +39,44 @@ jobs:
           Commit: ${{ github.sha }}
 
     - name: Build Debug APK
-      run: gradle assembleDebug --info --stacktrace
+      run: gradle clean assembleDebug --info --stacktrace
 
     - name: Prepare APK
       if: success()
       run: cp app/build/outputs/apk/debug/app-debug.apk FlowStable-Wallet-Latest.apk
 
-    - name: Send APK and Status
-      if: always()
+    - name: Send Success Notification
+      if: success()
       uses: appleboy/telegram-action@v1.0.1
       with:
         token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         to: ${{ secrets.TELEGRAM_CHAT_ID }}
-        document: ${{ (success() && 'FlowStable-Wallet-Latest.apk') || '' }}
+        document: FlowStable-Wallet-Latest.apk
         message: |
-          ${{ job.status == 'success' && '✅' || '❌' }} Android Build ${{ job.status }}
+          ✅ Android Build SUCCESS
           
           App: FlowStable Wallet
           Branch: ${{ github.ref_name }}
           Commit: ${{ github.sha }}
           Contributor: ${{ github.actor }}
           
-          ${{ job.status == 'success' && 'The APK is attached below.' || 'Check logs for errors.' }}
+          The APK is attached below.
+
+    - name: Send Failure Notification
+      if: failure()
+      uses: appleboy/telegram-action@v1.0.1
+      with:
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        message: |
+          ❌ Android Build FAILED
+          
+          App: FlowStable Wallet
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Contributor: ${{ github.actor }}
+          
+          Check GitHub Actions logs for details.
 
     - name: Upload Artifact
       if: success()
