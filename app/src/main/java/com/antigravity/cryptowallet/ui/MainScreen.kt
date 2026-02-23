@@ -1,5 +1,6 @@
 package com.antigravity.cryptowallet.ui
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -21,8 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.antigravity.cryptowallet.ui.components.BottomNavItem
-import com.antigravity.cryptowallet.ui.components.BrutalistBottomBar
-import com.antigravity.cryptowallet.ui.theme.BrutalBlack
+import com.antigravity.cryptowallet.ui.components.FluidBottomBar
 import com.antigravity.cryptowallet.ui.wallet.WalletScreen
 import com.antigravity.cryptowallet.ui.history.HistoryScreen
 
@@ -42,7 +43,7 @@ fun MainScreen(
 
     val items = listOf(
         BottomNavItem("Wallet", Icons.Filled.Home, "wallet"),
-        BottomNavItem("Card", Icons.Filled.CreditCard, "card"),
+        BottomNavItem("Card", Icons.Expanded.CreditCard, "card"),
         BottomNavItem("Browser", Icons.Filled.Public, "browser"),
         BottomNavItem("History", Icons.Filled.History, "history"),
         BottomNavItem("Settings", Icons.Filled.Settings, "settings")
@@ -52,7 +53,7 @@ fun MainScreen(
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-            BrutalistBottomBar(
+            FluidBottomBar(
                 items = items,
                 currentRoute = currentRoute,
                 onItemClick = { route ->
@@ -70,7 +71,9 @@ fun MainScreen(
         NavHost(
             navController = navController,
             startDestination = "wallet",
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn() + scaleIn(initialScale = 0.95f) },
+            exitTransition = { fadeOut() + scaleOut(targetScale = 0.95f) }
         ) {
             composable("wallet") {
                 WalletScreen(
@@ -109,6 +112,6 @@ fun PlaceholderScreen(text: String) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = text, color = BrutalBlack, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(text = text, style = MaterialTheme.typography.bodyLarge, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }

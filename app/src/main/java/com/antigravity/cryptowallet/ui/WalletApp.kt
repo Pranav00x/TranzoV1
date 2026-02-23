@@ -24,16 +24,16 @@ fun WalletApp(
         navController = navController, 
         startDestination = "splash",
         enterTransition = {
-            androidx.compose.animation.slideInHorizontally(initialOffsetX = { it }) + androidx.compose.animation.fadeIn()
+            scaleIn(initialScale = 0.9f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(400))
         },
         exitTransition = {
-            androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -it }) + androidx.compose.animation.fadeOut()
+            scaleOut(targetScale = 1.1f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(400))
         },
         popEnterTransition = {
-            androidx.compose.animation.slideInHorizontally(initialOffsetX = { -it }) + androidx.compose.animation.fadeIn()
+            scaleIn(initialScale = 1.1f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeIn(animationSpec = tween(400))
         },
         popExitTransition = {
-            androidx.compose.animation.slideOutHorizontally(targetOffsetX = { it }) + androidx.compose.animation.fadeOut()
+            scaleOut(targetScale = 0.9f, animationSpec = tween(400, easing = FastOutSlowInEasing)) + fadeOut(animationSpec = tween(400))
         }
     ) {
         composable("splash") {

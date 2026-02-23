@@ -1,60 +1,45 @@
 package com.antigravity.cryptowallet.ui.wallet
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.window.Dialog
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.antigravity.cryptowallet.utils.QrCodeGenerator
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.antigravity.cryptowallet.ui.components.*
+import com.antigravity.cryptowallet.ui.theme.PrimaryVariant
+import com.antigravity.cryptowallet.ui.theme.SecondaryVariant
+import com.antigravity.cryptowallet.utils.QrCodeGenerator
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.antigravity.cryptowallet.data.blockchain.BlockchainService
 import com.antigravity.cryptowallet.data.blockchain.NetworkRepository
 import com.antigravity.cryptowallet.data.wallet.AssetRepository
 import com.antigravity.cryptowallet.data.wallet.WalletRepository
-import com.antigravity.cryptowallet.ui.components.BrutalistButton
-import com.antigravity.cryptowallet.ui.components.BrutalistHeader
-import com.antigravity.cryptowallet.ui.components.BrutalistInfoRow
-import com.antigravity.cryptowallet.ui.theme.BrutalBlack
-import com.antigravity.cryptowallet.ui.theme.BrutalWhite
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import javax.inject.Inject
-
 
 @HiltViewModel
 class WalletViewModel @Inject constructor(
@@ -62,20 +47,15 @@ class WalletViewModel @Inject constructor(
     private val assetRepository: AssetRepository,
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
-    val address: String
-        get() = walletRepository.getAddress()
-    
+    val address: String get() = walletRepository.getAddress()
     val networks = networkRepository.networks
     var activeNetwork by mutableStateOf(networkRepository.activeNetwork)
         private set
 
-    // UI State
     var totalBalanceUsd by mutableStateOf("$0.00")
     var assets by mutableStateOf<List<com.antigravity.cryptowallet.data.models.AssetUiModel>>(emptyList())
     var isRefreshing by mutableStateOf(false)
-    
-    // Tab State
-    var selectedTab by mutableStateOf(0) // 0 = Assets, 1 = NFTs
+    var selectedTab by mutableStateOf(0)
 
     private var allAssets = listOf<com.antigravity.cryptowallet.data.models.AssetUiModel>()
 
@@ -96,15 +76,6 @@ class WalletViewModel @Inject constructor(
         }
     }
 
-    suspend fun sendAsset(asset: com.antigravity.cryptowallet.data.models.AssetUiModel, toAddress: String, amount: String): String? {
-        return try {
-            assetRepository.sendAsset(asset, toAddress, amount)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
     fun refresh() {
         viewModelScope.launch {
             isRefreshing = true
@@ -116,32 +87,19 @@ class WalletViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             if (!walletRepository.isWalletCreated()) return@launch
-            
-            // Collect assets
-            launch {
-                assetRepository.assets.collect { assetList ->
-                    allAssets = assetList
-                    updateDisplayedAssets()
-                }
+            assetRepository.assets.collect { assetList ->
+                allAssets = assetList
+                updateDisplayedAssets()
             }
-            
-            // Trigger initial refresh
-            refresh()
         }
+        refresh()
     }
     
     private fun updateDisplayedAssets() {
-        // Show all assets, not just filtered by network
-        // This ensures users can see their whole portfolio
         assets = allAssets
-        
-        // Calculate total from ALL assets
         val total = allAssets.sumOf { it.rawBalance * it.price }
         totalBalanceUsd = String.format("$%.2f", total)
     }
-
-    // Mock generation removed
-
 }
 
 @Composable
@@ -151,425 +109,279 @@ fun WalletScreen(
     onNavigateToSend: () -> Unit = {},
     onNavigateToTokenDetail: (String) -> Unit = {}
 ) {
+    var showReceiveDialog by remember { mutableStateOf(false) }
+    var showAddTokenDialog by remember { mutableStateOf(false) }
+    var showNetworkSelector by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .statusBarsPadding()
     ) {
-        val clipboardManager = LocalClipboardManager.current
-        var showReceiveDialog by remember { mutableStateOf(false) }
-        var showAddTokenDialog by remember { mutableStateOf(false) }
-        var showNetworkSelector by remember { mutableStateOf(false) }
-
-        if (showNetworkSelector) {
-            Dialog(onDismissRequest = { showNetworkSelector = false }) {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                        .border(2.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(24.dp))
-                        .clip(RoundedCornerShape(24.dp))
-                        .padding(24.dp)
-                ) {
-                    BrutalistHeader("Switch Network")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyColumn {
-                        items(viewModel.networks.size) { index ->
-                            val net = viewModel.networks[index]
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { 
-                                        viewModel.switchNetwork(net.id)
-                                        showNetworkSelector = false
-                                    }
-                                    .background(if (viewModel.activeNetwork.id == net.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(net.name, color = if (viewModel.activeNetwork.id == net.id) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                                if (viewModel.activeNetwork.id == net.id) {
-                                    Text("ACTIVE", color = MaterialTheme.colorScheme.onPrimary, fontSize = 10.sp, fontWeight = FontWeight.Black)
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-                }
-            }
-        }
-
-        if (showAddTokenDialog) {
-            var inputAddress by remember { mutableStateOf("") }
-            var inputSymbol by remember { mutableStateOf("") }
-            var inputDecimals by remember { mutableStateOf("18") }
-
-            Dialog(onDismissRequest = { showAddTokenDialog = false }) {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
-                        .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(24.dp))
-                        .clip(RoundedCornerShape(24.dp))
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    BrutalistHeader("Add Token")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("on ${viewModel.activeNetwork.name}", fontSize = 12.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    androidx.compose.material3.OutlinedTextField(
-                        value = inputAddress,
-                        onValueChange = { inputAddress = it },
-                        label = { Text("Contract Address") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    androidx.compose.material3.OutlinedTextField(
-                        value = inputSymbol,
-                        onValueChange = { inputSymbol = it },
-                        label = { Text("Symbol (e.g. USDC)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    BrutalistButton(text = "Add", onClick = { 
-                        if (inputAddress.isNotEmpty() && inputSymbol.isNotEmpty()) {
-                            viewModel.addToken(inputAddress, inputSymbol.uppercase(), inputDecimals.toIntOrNull() ?: 18)
-                            showAddTokenDialog = false
-                        }
-                    })
-                }
-            }
-        }
-
-        if (showReceiveDialog) {
-            Dialog(onDismissRequest = { showReceiveDialog = false }) {
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Receive Assets",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "on ${viewModel.activeNetwork.name}", 
-                            fontSize = 12.sp, 
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        if (viewModel.address.length > 10) { 
-                            val qrBitmap = remember(viewModel.address) {
-                                QrCodeGenerator.generateQrCode(viewModel.address)
-                            }
-                            // White background for QR code visibility
-                            Box(
-                                modifier = Modifier
-                                    .background(Color.White, RoundedCornerShape(12.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Image(
-                                    bitmap = qrBitmap.asImageBitmap(),
-                                    contentDescription = "Wallet Address QR Code",
-                                    modifier = Modifier.size(180.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Address in a copyable box
-                        androidx.compose.material3.Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    clipboardManager.setText(AnnotatedString(viewModel.address))
-                                }
-                        ) {
-                            Text(
-                                text = viewModel.address,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(12.dp)
-                            )
-                        }
-                        Text(
-                            text = "Tap to copy address",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        BrutalistButton(
-                            text = "Close", 
-                            onClick = { showReceiveDialog = false },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-        }
-
+        // TOP BAR
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                BrutalistHeader("Dashboard")
-                Row(
+            Column(modifier = Modifier.clickable { showNetworkSelector = true }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = viewModel.activeNetwork.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Text(
+                    text = "Connected • ${viewModel.address.take(6)}...${viewModel.address.takeLast(4)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            
+            Row {
+                IconButton(
+                    onClick = { viewModel.refresh() },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape).size(40.dp)
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(Modifier.width(12.dp))
+                IconButton(
+                    onClick = onSetupSecurity,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape).size(40.dp)
+                ) {
+                    Icon(Icons.Default.Shield, contentDescription = "Security", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(bottom = 100.dp)
+        ) {
+            // BALANCE CARD
+            item {
+                Surface(
                     modifier = Modifier
-                        .clickable { showNetworkSelector = true }
-                        .padding(vertical = 4.dp),
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .shadow(24.dp, RoundedCornerShape(28.dp), ambientColor = PrimaryVariant.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(28.dp),
+                    brush = Brush.linearGradient(listOf(PrimaryVariant, SecondaryVariant))
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(28.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text("Total Balance", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = viewModel.totalBalanceUsd,
+                                style = MaterialTheme.typography.displayLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                        
+                        Text(
+                            text = "Main Wallet Assets",
+                            color = Color.White.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
+            }
+
+            // ACTIONS
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    FluidButton(
+                        text = "Send",
+                        onClick = onNavigateToSend,
+                        icon = Icons.Default.ArrowOutward,
+                        modifier = Modifier.weight(1f)
+                    )
+                    FluidButton(
+                        text = "Receive",
+                        onClick = { showReceiveDialog = true },
+                        icon = Icons.Default.FileDownload,
+                        modifier = Modifier.weight(1f),
+                        backgroundColor = MaterialTheme.colorScheme.surface,
+                        textColor = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(Modifier.height(32.dp))
+            }
+
+            // ASSETS HEADER
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.size(6.dp).background(Color.Green, androidx.compose.foundation.shape.CircleShape))
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        viewModel.activeNetwork.name.uppercase(),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                        "Assets",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
+                    TextButton(onClick = { showAddTokenDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Add Token", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
+                Spacer(Modifier.height(16.dp))
             }
-            Row {
-                androidx.compose.material3.IconButton(
-                    onClick = { viewModel.refresh() },
-                    modifier = Modifier.size(40.dp)
+
+            // ASSET LIST
+            items(viewModel.assets) { asset ->
+                Surface(
+                    onClick = { onNavigateToTokenDetail(asset.symbol) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 2.dp
                 ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Refresh",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                androidx.compose.material3.IconButton(
-                    onClick = onSetupSecurity,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = "Security Settings",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.03f), RoundedCornerShape(16.dp))
-                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
-                .padding(20.dp)
-        ) {
-            Column {
-                Text(
-                    text = "TOTAL BALANCE",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    text = viewModel.totalBalanceUsd,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-1).sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Tabs
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(if (viewModel.selectedTab == 0) MaterialTheme.colorScheme.onBackground else Color.Transparent)
-                    .clickable { viewModel.selectedTab = 0 }
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "ASSETS", 
-                    color = if (viewModel.selectedTab == 0) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 11.sp,
-                    letterSpacing = 1.sp
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(if (viewModel.selectedTab == 1) MaterialTheme.colorScheme.onBackground else Color.Transparent)
-                    .clickable { viewModel.selectedTab = 1 }
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "NFTS", 
-                    color = if (viewModel.selectedTab == 1) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 11.sp,
-                    letterSpacing = 1.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (viewModel.selectedTab == 0) {
-            // Asset List
-            androidx.compose.foundation.lazy.LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(viewModel.assets.size) { index ->
-                    val asset = viewModel.assets[index]
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Shadow
+                        // Coin Icon
                         Box(
                             modifier = Modifier
-                                .matchParentSize()
-                                .offset(3.dp, 3.dp)
-                                .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
-                        )
-                        
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { onNavigateToTokenDetail(asset.symbol) }
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), CircleShape),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Symbol Icon
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f), androidx.compose.foundation.shape.CircleShape)
-                                        .border(2.dp, MaterialTheme.colorScheme.onBackground, androidx.compose.foundation.shape.CircleShape)
-                                        .clip(androidx.compose.foundation.shape.CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        asset.symbol.take(1), 
-                                        color = MaterialTheme.colorScheme.onBackground, 
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 16.sp
-                                    )
+                            Text(
+                                asset.symbol.take(1),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        
+                        Spacer(Modifier.width(16.dp))
+                        
+                        Column(Modifier.weight(1f)) {
+                            Text(asset.symbol, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                            Text(asset.networkName.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        }
+                        
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(asset.balanceUsd, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                            Text(asset.balance, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // DIALOGS
+    if (showReceiveDialog) {
+        Dialog(onDismissRequest = { showReceiveDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Receive", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
+                    Text(viewModel.activeNetwork.name, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+                    
+                    Spacer(Modifier.height(24.dp))
+                    
+                    val qrBitmap = remember(viewModel.address) { QrCodeGenerator.generateQrCode(viewModel.address) }
+                    Surface(
+                        color = Color.White,
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Image(
+                            bitmap = qrBitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.size(200.dp).padding(16.dp)
+                        )
+                    }
+                    
+                    Spacer(Modifier.height(24.dp))
+                    
+                    val clipboard = LocalClipboardManager.current
+                    Surface(
+                        onClick = { clipboard.setText(AnnotatedString(viewModel.address)) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = viewModel.address,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showNetworkSelector) {
+        Dialog(onDismissRequest = { showNetworkSelector = false }) {
+            Surface(
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(Modifier.padding(24.dp)) {
+                    Text("Switch Network", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(16.dp))
+                    viewModel.networks.forEach { network ->
+                        Surface(
+                            onClick = { 
+                                viewModel.switchNetwork(network.id)
+                                showNetworkSelector = false
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (viewModel.activeNetwork.id == network.id) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(network.name, fontWeight = FontWeight.Bold)
+                                if (viewModel.activeNetwork.id == network.id) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = asset.symbol, 
-                                        fontWeight = FontWeight.Black, 
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 16.sp
-                                    )
-                                    Text(
-                                        text = asset.networkName.uppercase(), 
-                                        fontSize = 10.sp, 
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Gray,
-                                        letterSpacing = 1.sp
-                                    )
-                                }
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = asset.balanceUsd, 
-                                    fontWeight = FontWeight.Black, 
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    text = asset.balance, 
-                                    fontSize = 12.sp, 
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
                             }
                         }
                     }
                 }
-                
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BrutalistButton("Add Token +", onClick = { showAddTokenDialog = true }, inverted = true)
-                }
             }
-        } else {
-            // NFTs Placeholder
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("No NFTs found", fontWeight = FontWeight.Bold, color = BrutalBlack)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BrutalistButton("Find NFTs", onClick = { }, inverted = true)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        // Actions
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            BrutalistButton(
-                text = "Send",
-                onClick = onNavigateToSend,
-                icon = Icons.Default.ArrowOutward,
-                modifier = Modifier.weight(1f)
-            )
-            BrutalistButton(
-                text = "Receive",
-                onClick = { showReceiveDialog = true },
-                icon = Icons.Default.FileDownload,
-                modifier = Modifier.weight(1f),
-                inverted = true
-            )
         }
     }
 }
