@@ -64,7 +64,7 @@ class WalletViewModel @Inject constructor(
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
     val address: String
-        get() = walletRepository.getAddress()
+        get() = walletRepository.getAddress(activeNetwork.id)
     
     // Expose flow so UI re-renders when custom chains are added
     val networksFlow = networkRepository.networksFlow

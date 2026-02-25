@@ -33,7 +33,6 @@ class AssetRepository @Inject constructor(
 
     suspend fun refreshAssets() = withContext(Dispatchers.IO) {
         if (!walletRepository.isWalletCreated()) return@withContext
-        val address = walletRepository.getAddress()
 
         // 1. Ensure Defaults
         val savedTokens = tokenDao.getAllTokens().first()
@@ -67,6 +66,7 @@ class AssetRepository @Inject constructor(
         val nativeAssetsDeferred = networkRepository.networks.map { net ->
             async {
                 try {
+                    val address = walletRepository.getAddress(net.id)
                     val balance = blockchainService.getBalance(net.rpcUrl, address, net.id)
                     
                     val decimals = when (net.id) {
@@ -113,6 +113,7 @@ class AssetRepository @Inject constructor(
                 try {
                     val net = networkRepository.getNetwork(token.chainId)
                     if (token.contractAddress != null) {
+                        val address = walletRepository.getAddress(net.id)
                         val balance = blockchainService.getTokenBalance(net.rpcUrl, token.contractAddress, address, net.id)
                         val tokenBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(token.decimals))
                         

@@ -212,8 +212,22 @@ class WalletRepository @Inject constructor(
         }
     }
 
-    fun getAddress(): String {
-        return activeCredentials?.address ?: ""
+    fun getAddress(networkId: String = "eth"): String {
+        return when (networkId) {
+            "btc" -> {
+                val mnemonic = getMnemonicForActiveWallet()
+                if (mnemonic != null) CryptoUtils.getBtcAddress(mnemonic) else ""
+            }
+            "trx" -> {
+                val mnemonic = getMnemonicForActiveWallet()
+                if (mnemonic != null) {
+                    CryptoUtils.getTrxAddress(mnemonic)
+                } else {
+                    CryptoUtils.getTrxAddressFromEth(activeCredentials?.address ?: "")
+                }
+            }
+            else -> activeCredentials?.address ?: ""
+        }
     }
     
     fun getPrivateKey(): String {

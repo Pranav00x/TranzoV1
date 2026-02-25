@@ -58,8 +58,8 @@ fun BrowserScreen(
     var inputUrl by remember { mutableStateOf("") }
     var webView: WebView? by remember { mutableStateOf(null) }
     
-    val address = walletRepository.getAddress()
     var activeNetwork by remember { mutableStateOf(viewModel.activeNetwork) }
+    val address = walletRepository.getAddress(activeNetwork.id)
     
     var pendingRequest by remember { mutableStateOf<Web3Bridge.Web3Request?>(null) }
     var bridgeInstance by remember { mutableStateOf<Web3Bridge?>(null) }

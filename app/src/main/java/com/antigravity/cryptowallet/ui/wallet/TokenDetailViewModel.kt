@@ -55,10 +55,12 @@ class TokenDetailViewModel @Inject constructor(
     private var currentSymbol: String = ""
 
     val address: String
-        get() = walletRepository.getAddress()
+        get() = walletRepository.getAddress(currentNetId)
     
     val walletAddress: String
-        get() = walletRepository.getAddress()
+        get() = walletRepository.getAddress(currentNetId)
+
+    private var currentNetId: String = "eth"
 
     fun setTimeframeAndReload(days: String) {
         selectedTimeframe = days
@@ -88,23 +90,28 @@ class TokenDetailViewModel @Inject constructor(
                     else -> "eth"
                 }
                 val network = networkRepository.getNetwork(netId)
+                currentNetId = network.id
                 
                 // Trigger Transaction Refresh
-                val walletAddress = walletRepository.getAddress()
+                val targetAddress = walletRepository.getAddress(network.id)
                 try {
-                    transactionRepository.refreshTransactions(walletAddress, network)
+                    transactionRepository.refreshTransactions(targetAddress, network)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
                 
                 // Get Balance
                 val rawBalance = if (tokenEntity?.contractAddress != null) {
-                    blockchainService.getTokenBalance(network.rpcUrl, tokenEntity.contractAddress, walletAddress)
+                    blockchainService.getTokenBalance(network.rpcUrl, tokenEntity.contractAddress, targetAddress, network.id)
                 } else {
-                    blockchainService.getBalance(network.rpcUrl, walletAddress)
+                    blockchainService.getBalance(network.rpcUrl, targetAddress, network.id)
                 }
                 
-                val decimals = tokenEntity?.decimals ?: 18
+                val decimals = tokenEntity?.decimals ?: when(network.id) {
+                    "btc" -> 8
+                    "trx" -> 6
+                    else -> 18
+                }
                 val ethBalance = BigDecimal(rawBalance).divide(BigDecimal.TEN.pow(decimals), 4, BigDecimal.ROUND_HALF_UP)
                 balance = String.format("%.4f %s", ethBalance, symbol)
             } catch (e: Exception) {

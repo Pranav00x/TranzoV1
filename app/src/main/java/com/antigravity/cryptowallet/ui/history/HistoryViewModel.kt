@@ -24,9 +24,9 @@ class HistoryViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             if (!walletRepository.isWalletCreated()) return@launch
-            val address = walletRepository.getAddress()
             
             networkRepository.networks.forEach { network ->
+                val address = walletRepository.getAddress(network.id)
                 repository.refreshTransactions(address, network)
             }
         }
