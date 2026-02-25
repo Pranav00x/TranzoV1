@@ -23,18 +23,21 @@ class Web3Bridge(
         val chainId = chainIdProvider()
         return """
             (function() {
-                const address = '$address';
+                if (window.ethereum) return;
+                
+                const address = '$address'.toLowerCase();
                 const chainId = '0x${chainId.toString(16)}';
                 
                 window.ethereum = {
                     isAntigravity: true,
                     isMetaMask: true,
-                    address: address,
+                    networkVersion: '${chainId}',
                     chainId: chainId,
+                    selectedAddress: address,
                     
                     request: async function(payload) {
                         return new Promise((resolve, reject) => {
-                            const id = Math.floor(Math.random() * 1000000);
+                            const id = payload.id || Math.floor(Math.random() * 1000000);
                             window.callbacks[id] = { resolve, reject };
                             window.androidWallet.postMessage(JSON.stringify({
                                 method: payload.method,
@@ -48,12 +51,37 @@ class Web3Bridge(
                         return this.request({ method: 'eth_requestAccounts' });
                     },
                     
-                    send: function(method, params) {
-                        return this.request({ method, params });
+                    sendAsync: function(payload, callback) {
+                        this.request(payload).then(result => {
+                            callback(null, { id: payload.id, jsonrpc: '2.0', result: result });
+                        }).catch(error => {
+                            callback(error, null);
+                        });
+                    },
+                    
+                    send: function(payload, callback) {
+                        if (typeof callback === 'function') {
+                            this.sendAsync(payload, callback);
+                        } else if (typeof payload === 'string') {
+                            return this.request({ method: payload, params: callback || [] });
+                        } else {
+                            // Sync methods fallback
+                            if (payload.method === 'eth_accounts') return { id: payload.id, jsonrpc: '2.0', result: [address] };
+                            if (payload.method === 'eth_chainId') return { id: payload.id, jsonrpc: '2.0', result: chainId };
+                            return { id: payload.id, jsonrpc: '2.0', result: null };
+                        }
                     },
                     
                     on: function(event, callback) {
-                        console.log('Event listener added:', event);
+                        if (!this._listeners) this._listeners = {};
+                        if (!this._listeners[event]) this._listeners[event] = [];
+                        this._listeners[event].push(callback);
+                    },
+                    
+                    removeListener: function(event, callback) {
+                        if (this._listeners && this._listeners[event]) {
+                            this._listeners[event] = this._listeners[event].filter(cb => cb !== callback);
+                        }
                     }
                 };
                 
@@ -67,40 +95,43 @@ class Web3Bridge(
                     }
                 };
                 
-                window.dispatchEvent(new Event('ethereum#initialized'));
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('ethereum#initialized'));
+                }, 100);
             })();
         """.trimIndent()
     }
 
     @JavascriptInterface
     fun postMessage(json: String) {
-        val obj = JSONObject(json)
-        val method = obj.getString("method")
-        val id = obj.getInt("id")
-        val params = obj.optString("params", "[]")
-        
-        webView.post {
-            when (method) {
-                "wallet_switchEthereumChain" -> {
-                     onActionRequest(Web3Request(id, method, params))
-                }
-                "eth_requestAccounts", "eth_accounts" -> {
-                    sendResponse(id, "[\"$address\"]")
-                }
-                "eth_chainId" -> {
-                    sendResponse(id, "\"0x${chainIdProvider().toString(16)}\"")
-                }
-                "net_version" -> {
-                    sendResponse(id, "\"${chainIdProvider()}\"")
-                }
-                "eth_sendTransaction", "personal_sign", "eth_sign", "eth_signTypedData_v4" -> {
-                    onActionRequest(Web3Request(id, method, params))
-                }
-                else -> {
-                    // Try to respond null/error for unknowns to avoid hang
-                    sendError(id, "Method $method not supported")
+        try {
+            val obj = JSONObject(json)
+            val method = obj.getString("method")
+            val id = obj.getInt("id")
+            val params = obj.optJSONArray("params")?.toString() ?: obj.optString("params", "[]")
+            
+            webView.post {
+                when (method) {
+                    "eth_requestAccounts", "wallet_switchEthereumChain", "eth_sendTransaction", "personal_sign", "eth_sign", "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> {
+                        onActionRequest(Web3Request(id, method, params))
+                    }
+                    "eth_accounts" -> {
+                        sendResponse(id, "[\"$address\"]")
+                    }
+                    "eth_chainId" -> {
+                        sendResponse(id, "\"0x${chainIdProvider().toString(16)}\"")
+                    }
+                    "net_version" -> {
+                        sendResponse(id, "\"${chainIdProvider()}\"")
+                    }
+                    else -> {
+                        // Not throwing error to avoid breaking some noisy dapps
+                        sendResponse(id, "null")
+                    }
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

@@ -504,9 +504,10 @@ fun Web3RequestDialog(
             Text(
                 when(request.method) {
                     "personal_sign", "eth_sign" -> "Sign Message"
-                    "eth_signTypedData_v4" -> "Sign Typed Data"
+                    "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign Typed Data"
                     "eth_sendTransaction" -> "Confirm Transaction"
                     "wallet_switchEthereumChain" -> "Switch Network"
+                    "eth_requestAccounts" -> "Connection Request"
                     else -> "DApp Request"
                 },
                 color = MaterialTheme.colorScheme.onSurface,
@@ -522,7 +523,6 @@ fun Web3RequestDialog(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Try to parse out the raw message from params
                 val displayParams = try {
                     if (request.method == "personal_sign" || request.method == "eth_sign") {
                         val paramsArray = org.json.JSONArray(request.params)
@@ -532,6 +532,8 @@ fun Web3RequestDialog(
                         } else {
                             "Message:\n$rawMsg"
                         }
+                    } else if (request.method == "eth_requestAccounts") {
+                        "Allow this DApp to connect to your wallet?"
                     } else {
                         request.params
                     }
@@ -612,7 +614,7 @@ private suspend fun handleWeb3RequestAsync(
                 }
             }
         }
-        "eth_signTypedData_v4" -> {
+        "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> {
             try {
                 // For typed data, we need the data param (second param typically)
                 val paramsArray = org.json.JSONArray(request.params)
@@ -635,6 +637,11 @@ private suspend fun handleWeb3RequestAsync(
                 withContext(Dispatchers.Main) {
                     bridge?.sendError(request.id, e.message ?: "Typed data signing failed")
                 }
+            }
+        }
+        "eth_requestAccounts" -> {
+            withContext(Dispatchers.Main) {
+                bridge?.sendResponse(request.id, "[\"${credentials.address}\"]")
             }
         }
         "wallet_switchEthereumChain" -> {
