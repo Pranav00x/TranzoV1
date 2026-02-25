@@ -64,22 +64,19 @@ class WalletViewModel @Inject constructor(
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
     val address: String
-        get() = walletRepository.getAddress(if (selectedNetworkId == "all") "eth" else selectedNetworkId)
+        get() = walletRepository.getAddress(selectedNetworkId)
     
     // Expose flow so UI re-renders when custom chains are added
     val networksFlow = networkRepository.networksFlow
     
     val networks: List<com.antigravity.cryptowallet.data.blockchain.Network>
-        get() = listOf(com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")) + networkRepository.networks
+        get() = networkRepository.networks
         
-    var selectedNetworkId by mutableStateOf("all")
+    var selectedNetworkId by mutableStateOf(networkRepository.networks.firstOrNull()?.id ?: "eth")
         private set
 
     val activeNetwork: com.antigravity.cryptowallet.data.blockchain.Network
-        get() = if (selectedNetworkId == "all") 
-            com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")
-        else 
-            networkRepository.getNetwork(selectedNetworkId)
+        get() = networkRepository.getNetwork(selectedNetworkId)
 
     // UI State
     var totalBalanceUsd by mutableStateOf("$0.00")
@@ -97,13 +94,9 @@ class WalletViewModel @Inject constructor(
 
     fun switchNetwork(networkId: String) {
         selectedNetworkId = networkId
-        if (networkId != "all") {
-            networkRepository.setActiveNetwork(networkId)
-        }
+        networkRepository.setActiveNetwork(networkId)
         updateDisplayedAssets()
-        if (networkId != "all") {
-            refresh()
-        }
+        refresh()
     }
     
     fun addNetwork(name: String, rpcUrl: String, chainId: Long, symbol: String, explorerUrl: String) {
@@ -161,11 +154,7 @@ class WalletViewModel @Inject constructor(
     }
     
     private fun updateDisplayedAssets() {
-        if (selectedNetworkId == "all") {
-            assets = allAssets
-        } else {
-            assets = allAssets.filter { it.networkName == activeNetwork.name }
-        }
+        assets = allAssets.filter { it.networkName == activeNetwork.name }
         
         // Calculate total from filtered assets
         val total = assets.sumOf { it.rawBalance * it.price }
@@ -196,7 +185,7 @@ fun WalletScreen(
 
         val repoNetworks by viewModel.networksFlow.collectAsState(initial = emptyList())
         val networks = remember(repoNetworks) {
-            listOf(com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")) + (if (repoNetworks.isEmpty()) viewModel.networks.drop(1) else repoNetworks)
+            if (repoNetworks.isEmpty()) viewModel.networks else repoNetworks
         }
         var showAddNetworkDialog by remember { mutableStateOf(false) }
 
