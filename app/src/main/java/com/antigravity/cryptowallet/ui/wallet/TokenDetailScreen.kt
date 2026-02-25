@@ -172,14 +172,35 @@ fun TokenDetailScreen(
 
         // Graph Section
         val ohlc = viewModel.ohlcData
+        
+        // Timeframe Selector
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val timeframes = listOf("1D", "7D", "1M", "1Y", "ALL")
+            timeframes.forEach { tf ->
+                val isSelected = viewModel.selectedTimeframe == tf
+                Text(
+                    text = tf,
+                    fontSize = 12.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Gray,
+                    modifier = Modifier
+                        .clickable { viewModel.setTimeframeAndReload(tf) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(12.dp)
+                // Removed the harsh borders and background for the minimalist look
         ) {
             if (ohlc.isNotEmpty()) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -230,7 +251,7 @@ fun TokenDetailScreen(
                     }
                 }
             } else {
-                 Text("Loading 1Y Chart...", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
+                 Text("Loading Chart...", color = Color.Gray, modifier = Modifier.align(Alignment.Center))
             }
         }
 

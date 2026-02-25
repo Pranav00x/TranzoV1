@@ -45,6 +45,10 @@ class TokenDetailViewModel @Inject constructor(
     var ohlcData by mutableStateOf<List<List<Double>>>(emptyList())
         private set
 
+    // Graph timeframe support
+    var selectedTimeframe by mutableStateOf("30") // default to 30 days
+        private set
+
     var transactions by mutableStateOf<List<TransactionEntity>>(emptyList())
         private set
 
@@ -55,6 +59,13 @@ class TokenDetailViewModel @Inject constructor(
     
     val walletAddress: String
         get() = walletRepository.getAddress()
+
+    fun setTimeframeAndReload(days: String) {
+        selectedTimeframe = days
+        if (currentSymbol.isNotEmpty()) {
+            loadTokenData(currentSymbol)
+        }
+    }
 
     fun loadTokenData(symbol: String) {
         currentSymbol = symbol
@@ -156,8 +167,16 @@ class TokenDetailViewModel @Inject constructor(
             // Fetch Chart, OHLC (Secondary)
             launch {
                 try {
-                    // Fetch OHLC for Candlestick (Start with shorter duration for reliability: 30 days)
-                    ohlcData = coinRepository.getOHLC(id, "30")
+                    // Fetch OHLC for Candlestick utilizing the selected timeframe
+                    val apiTimeframe = when(selectedTimeframe) {
+                        "1D" -> "1"
+                        "7D" -> "7"
+                        "1M" -> "30"
+                        "1Y" -> "365"
+                        "ALL" -> "max"
+                        else -> "30"
+                    }
+                    ohlcData = coinRepository.getOHLC(id, apiTimeframe)
                     
                     if (ohlcData.isNotEmpty()) {
                         val lastCandle = ohlcData.last()
@@ -174,7 +193,15 @@ class TokenDetailViewModel @Inject constructor(
                     e.printStackTrace()
                     // Fallback to regular chart
                     try {
-                        val chart = coinRepository.getMarketChart(id, "30")
+                        val apiTimeframe = when(selectedTimeframe) {
+                            "1D" -> "1"
+                            "7D" -> "7"
+                            "1M" -> "30"
+                            "1Y" -> "365"
+                            "ALL" -> "max"
+                            else -> "30"
+                        }
+                        val chart = coinRepository.getMarketChart(id, apiTimeframe)
                         graphPoints = chart.prices.map { it[1] }
                         if (graphPoints.isNotEmpty()) {
                             val currentPrice = graphPoints.lastOrNull() ?: 0.0
