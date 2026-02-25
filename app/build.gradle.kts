@@ -26,11 +26,23 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        create("localDebug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("localDebug")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug") // For demo purposes
+            signingConfig = signingConfigs.getByName("localDebug") // For demo purposes
         }
     }
     lint {
