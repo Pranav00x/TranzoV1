@@ -124,3 +124,7 @@ dependencies {
     // QR Code
     implementation("com.google.zxing:core:3.5.3")
 }
+
+configurations.all {
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+}
