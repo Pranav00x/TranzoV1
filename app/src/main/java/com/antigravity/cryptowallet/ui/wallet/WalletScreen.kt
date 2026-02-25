@@ -8,6 +8,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +66,11 @@ class WalletViewModel @Inject constructor(
     val address: String
         get() = walletRepository.getAddress()
     
-    val networks = networkRepository.networks
+    // Expose flow so UI re-renders when custom chains are added
+    val networksFlow = networkRepository.networksFlow
+    val networks: List<com.antigravity.cryptowallet.data.blockchain.Network>
+        get() = networkRepository.networks
+        
     var activeNetwork by mutableStateOf(networkRepository.activeNetwork)
         private set
 
@@ -88,6 +93,20 @@ class WalletViewModel @Inject constructor(
         activeNetwork = networkRepository.activeNetwork
         updateDisplayedAssets()
         refresh()
+    }
+    
+    fun addNetwork(name: String, rpcUrl: String, chainId: Long, symbol: String, explorerUrl: String) {
+        val newNetwork = com.antigravity.cryptowallet.data.blockchain.Network(
+            id = "custom_$chainId",
+            name = name,
+            rpcUrl = rpcUrl,
+            initialRpc = rpcUrl,
+            chainId = chainId,
+            symbol = symbol,
+            coingeckoId = "", // Custom chains might not have coingecko integration out-of-the-box
+            explorerApiUrl = explorerUrl
+        )
+        networkRepository.addNetwork(newNetwork)
     }
     
     fun addToken(address: String, symbol: String, decimals: Int) {
@@ -162,6 +181,9 @@ fun WalletScreen(
         var showAddTokenDialog by remember { mutableStateOf(false) }
         var showNetworkSelector by remember { mutableStateOf(false) }
 
+        val networks by viewModel.networksFlow.collectAsState(initial = viewModel.networks)
+        var showAddNetworkDialog by remember { mutableStateOf(false) }
+
         if (showNetworkSelector) {
             Dialog(onDismissRequest = { showNetworkSelector = false }) {
                 Column(
@@ -173,9 +195,11 @@ fun WalletScreen(
                 ) {
                     BrutalistHeader("Switch Network")
                     Spacer(modifier = Modifier.height(16.dp))
-                    LazyColumn {
-                        items(viewModel.networks.size) { index ->
-                            val net = viewModel.networks[index]
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 300.dp)
+                    ) {
+                        items(networks.size) { index ->
+                            val net = networks[index]
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -184,6 +208,7 @@ fun WalletScreen(
                                         showNetworkSelector = false
                                     }
                                     .background(if (viewModel.activeNetwork.id == net.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                    .border(if (viewModel.activeNetwork.id == net.id) 2.dp else 0.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
                                     .clip(RoundedCornerShape(12.dp))
                                     .padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -195,7 +220,93 @@ fun WalletScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                        
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            BrutalistButton(
+                                text = "Add Custom Chain +", 
+                                onClick = { 
+                                    showNetworkSelector = false
+                                    showAddNetworkDialog = true 
+                                },
+                                inverted = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
+                }
+            }
+        }
+
+        if (showAddNetworkDialog) {
+            var netName by remember { mutableStateOf("") }
+            var rpcUrl by remember { mutableStateOf("") }
+            var chainIdStr by remember { mutableStateOf("") }
+            var symbol by remember { mutableStateOf("") }
+            var explorer by remember { mutableStateOf("") }
+
+            Dialog(onDismissRequest = { showAddNetworkDialog = false }) {
+                Column(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(24.dp))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    BrutalistHeader("Add Chain")
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    androidx.compose.material3.OutlinedTextField(
+                        value = netName,
+                        onValueChange = { netName = it },
+                        label = { Text("Network Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = rpcUrl,
+                        onValueChange = { rpcUrl = it },
+                        label = { Text("RPC URL") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = chainIdStr,
+                        onValueChange = { chainIdStr = it },
+                        label = { Text("Chain ID") },
+                        keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = symbol,
+                        onValueChange = { symbol = it },
+                        label = { Text("Currency Symbol") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = explorer,
+                        onValueChange = { explorer = it },
+                        label = { Text("Explorer URL (Optional)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    BrutalistButton(text = "Save Network", onClick = { 
+                        if (netName.isNotEmpty() && rpcUrl.isNotEmpty() && chainIdStr.isNotEmpty() && symbol.isNotEmpty()) {
+                            viewModel.addNetwork(
+                                name = netName,
+                                rpcUrl = rpcUrl,
+                                chainId = chainIdStr.toLongOrNull() ?: 0L,
+                                symbol = symbol.uppercase(),
+                                explorerUrl = explorer
+                            )
+                            showAddNetworkDialog = false
+                            showNetworkSelector = true // Bring selector back up
+                        }
+                    }, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
