@@ -136,45 +136,67 @@ class TokenDetailViewModel @Inject constructor(
                 else -> "ethereum"
             }
 
-            // Fetch Info
-            launch {
-                try {
-                    val info = coinRepository.getCoinInfo(id)
-                    val rawDescription = info.description.en
-                    description = rawDescription.replace(Regex("<.*?>"), "") 
-                        .take(300) + (if (rawDescription.length > 300) "..." else "")
-                    
-                    val rawAddr = info.platforms?.entries?.firstOrNull()?.value
-                    contractAddress = if (!rawAddr.isNullOrEmpty()) rawAddr else "Native Token"
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    description = when(symbol.uppercase()) {
-                        "ETH" -> "Ethereum is a decentralized, open-source blockchain with smart contract functionality. Ether (ETH) is the native cryptocurrency of the platform."
-                        "BNB" -> "BNB is the native cryptocurrency of the Binance ecosystem and powers the Binance Smart Chain."
-                        "MATIC", "POL" -> "Polygon is a protocol and a framework for building and connecting Ethereum-compatible blockchain networks."
-                        else -> "Failed to load detailed info for $symbol."
-                    }
-                    contractAddress = if (symbol.uppercase() == "ETH" || symbol.uppercase() == "BNB") "Native Token" else ""
+            // Execute fetching sequentially with delays to avoid CoinGecko 429 Rate Limits
+            try {
+                // 1. Fast Price Fetch
+                val priceMap = coinRepository.getSimplePrice(id)
+                val simplePrice = priceMap[id]?.get("usd") ?: 0.0
+                if (simplePrice > 0) {
+                     price = String.format("$%.2f", simplePrice)
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
             
-            // Fast Price Fetch
-            launch {
-                try {
-                    val priceMap = coinRepository.getSimplePrice(id)
-                    val simplePrice = priceMap[id]?.get("usd") ?: 0.0
-                    if (simplePrice > 0) {
-                         price = String.format("$%.2f", simplePrice)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
+            kotlinx.coroutines.delay(600) // Rate limit bumper
 
-            // Fetch Chart, OHLC (Secondary)
-            launch {
+            try {
+                // 2. Fetch Info
+                val info = coinRepository.getCoinInfo(id)
+                val rawDescription = info.description.en
+                description = rawDescription.replace(Regex("<.*?>"), "") 
+                    .take(300) + (if (rawDescription.length > 300) "..." else "")
+                
+                val rawAddr = info.platforms?.entries?.firstOrNull()?.value
+                contractAddress = if (!rawAddr.isNullOrEmpty()) rawAddr else "Native Token"
+            } catch (e: Exception) {
+                e.printStackTrace()
+                description = when(symbol.uppercase()) {
+                    "ETH" -> "Ethereum is a decentralized, open-source blockchain with smart contract functionality. Ether (ETH) is the native cryptocurrency of the platform."
+                    "BNB" -> "BNB is the native cryptocurrency of the Binance ecosystem and powers the Binance Smart Chain."
+                    "MATIC", "POL" -> "Polygon is a protocol and a framework for building and connecting Ethereum-compatible blockchain networks."
+                    else -> "Failed to load detailed info for $symbol."
+                }
+                contractAddress = if (symbol.uppercase() == "ETH" || symbol.uppercase() == "BNB") "Native Token" else ""
+            }
+            
+            kotlinx.coroutines.delay(600) // Rate limit bumper
+
+            try {
+                // 3. Fetch Chart, OHLC
+                val apiTimeframe = when(selectedTimeframe) {
+                    "1D" -> "1"
+                    "7D" -> "7"
+                    "1M" -> "30"
+                    "1Y" -> "365"
+                    "ALL" -> "max"
+                    else -> "30"
+                }
+                ohlcData = coinRepository.getOHLC(id, apiTimeframe)
+                
+                if (ohlcData.isNotEmpty()) {
+                    val lastCandle = ohlcData.last()
+                    graphPoints = ohlcData.map { it[4] } // Use close prices
+                     if (price == "Loading..." || price == "Error") {
+                         price = String.format("$%.2f", lastCandle[4])
+                    }
+                } else {
+                     throw Exception("Empty OHLC")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Fallback to regular chart
                 try {
-                    // Fetch OHLC for Candlestick utilizing the selected timeframe
                     val apiTimeframe = when(selectedTimeframe) {
                         "1D" -> "1"
                         "7D" -> "7"
@@ -183,51 +205,24 @@ class TokenDetailViewModel @Inject constructor(
                         "ALL" -> "max"
                         else -> "30"
                     }
-                    ohlcData = coinRepository.getOHLC(id, apiTimeframe)
-                    
-                    if (ohlcData.isNotEmpty()) {
-                        val lastCandle = ohlcData.last()
-                        graphPoints = ohlcData.map { it[4] } // Use close prices
-                        // Only update price if simple price failed or this is fresher
-                         if (price == "Loading..." || price == "Error") {
-                             price = String.format("$%.2f", lastCandle[4])
+                    val chart = coinRepository.getMarketChart(id, apiTimeframe)
+                    graphPoints = chart.prices.map { it[1] }
+                    if (graphPoints.isNotEmpty()) {
+                        val currentPrice = graphPoints.lastOrNull() ?: 0.0
+                        if (price == "Loading..." || price == "Error") {
+                            price = String.format("$%.2f", currentPrice)
                         }
-                    } else {
-                         throw Exception("Empty OHLC")
                     }
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    // Fallback to regular chart
-                    try {
-                        val apiTimeframe = when(selectedTimeframe) {
-                            "1D" -> "1"
-                            "7D" -> "7"
-                            "1M" -> "30"
-                            "1Y" -> "365"
-                            "ALL" -> "max"
-                            else -> "30"
-                        }
-                        val chart = coinRepository.getMarketChart(id, apiTimeframe)
-                        graphPoints = chart.prices.map { it[1] }
-                        if (graphPoints.isNotEmpty()) {
-                            val currentPrice = graphPoints.lastOrNull() ?: 0.0
-                            if (price == "Loading..." || price == "Error") {
-                                price = String.format("$%.2f", currentPrice)
-                            }
-                        }
-                    } catch (e2: Exception) {
-                         if (price == "Loading...") {
-                             price = "Error"
-                         }
-                    }
-                    
-                    // Generate mock OHLC data if everything fails so UI isn't empty (but try not to suppress error price)
-                    if (ohlcData.isEmpty()) {
-                        ohlcData = List(30) { i ->
-                            val base = if (price.replace("$","").replace(",","").toDoubleOrNull() != null) price.replace("$","").replace(",","").toDouble() else 100.0
-                            listOf(i.toDouble(), base, base + 5, base - 5, base + 2)
-                        }
+                } catch (e2: Exception) {
+                     if (price == "Loading...") {
+                         price = "Error"
+                     }
+                }
+                
+                if (ohlcData.isEmpty()) {
+                    ohlcData = List(30) { i ->
+                        val base = if (price.replace("$","").replace(",","").toDoubleOrNull() != null) price.replace("$","").replace(",","").toDouble() else 100.0
+                        listOf(i.toDouble(), base, base + 5, base - 5, base + 2)
                     }
                 }
             }
