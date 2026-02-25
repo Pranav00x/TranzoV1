@@ -42,7 +42,7 @@ fun MainScreen(
 
     val items = listOf(
         BottomNavItem("Wallet", Icons.Filled.Home, "wallet"),
-        BottomNavItem("Card", Icons.Filled.CreditCard, "card"),
+        BottomNavItem("Tools", Icons.Filled.CreditCard, "tools"),
         BottomNavItem("Browser", Icons.Filled.Public, "browser"),
         BottomNavItem("History", Icons.Filled.History, "history"),
         BottomNavItem("Settings", Icons.Filled.Settings, "settings")
@@ -79,8 +79,8 @@ fun MainScreen(
                     onNavigateToTokenDetail = onNavigateToTokenDetail
                 )
             }
-            composable("card") {
-                com.antigravity.cryptowallet.ui.card.CardScreen()
+            composable("tools") {
+                com.antigravity.cryptowallet.ui.card.ToolsScreen()
             }
             composable("browser") {
                 com.antigravity.cryptowallet.ui.browser.BrowserScreen()

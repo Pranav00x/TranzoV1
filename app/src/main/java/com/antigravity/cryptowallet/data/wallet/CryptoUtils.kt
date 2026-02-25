@@ -24,7 +24,7 @@ object CryptoUtils {
             val derivedKeyPair = Bip32ECKeyPair.deriveKeyPair(masterKeyPair, path)
             
             // To ECKey
-            val ecKey = ECKey.fromPrivate(derivedKeyPair.privateKeyBytes33)
+            val ecKey = ECKey.fromPrivate(derivedKeyPair.privateKey)
             return LegacyAddress.fromKey(MainNetParams.get(), ecKey).toString()
         } catch (e: Exception) {
             e.printStackTrace()

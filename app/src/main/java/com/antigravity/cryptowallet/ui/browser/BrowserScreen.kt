@@ -541,12 +541,30 @@ fun Web3RequestDialog(
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+                
+                // Try to parse out the raw message from params
+                val displayParams = try {
+                    if (request.method == "personal_sign" || request.method == "eth_sign") {
+                        val paramsArray = org.json.JSONArray(request.params)
+                        val rawMsg = paramsArray.getString(0)
+                        if (rawMsg.startsWith("0x")) {
+                            "Decoded Message:\n" + String(org.web3j.utils.Numeric.hexStringToByteArray(rawMsg), Charsets.UTF_8)
+                        } else {
+                            "Message:\n$rawMsg"
+                        }
+                    } else {
+                        request.params
+                    }
+                } catch (e: Exception) {
+                    request.params
+                }
+                
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        request.params.take(200) + if (request.params.length > 200) "..." else "",
+                        displayParams.take(500) + if (displayParams.length > 500) "..." else "",
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

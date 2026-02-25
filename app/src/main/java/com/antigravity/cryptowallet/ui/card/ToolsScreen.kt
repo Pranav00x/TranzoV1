@@ -15,7 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.antigravity.cryptowallet.ui.components.BrutalistHeader
 
 @Composable
-fun CardScreen(
+fun ToolsScreen(
     viewModel: CardViewModel = hiltViewModel()
 ) {
     Column(
@@ -24,7 +24,7 @@ fun CardScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        BrutalistHeader("Crypto Card")
+        BrutalistHeader("Crypto Tools")
         
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -42,7 +42,7 @@ fun CardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "The physical and virtual debit card feature is currently in development.",
+                    text = "A suite of powerful decentralized tools will be shipped here soon.",
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
