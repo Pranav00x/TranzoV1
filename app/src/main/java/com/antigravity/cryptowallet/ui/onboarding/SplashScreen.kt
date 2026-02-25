@@ -45,12 +45,19 @@ fun SplashScreen(
             modifier = Modifier.alpha(alphaAnim.value)
         ) {
             Text(
-                text = "FLOWSTABLE\u2122",
+                text = "FLOWSTABLE",
                 style = MaterialTheme.typography.displayMedium,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
                 letterSpacing = (-1).sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Crafted and secured by Flowstable Labs",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                fontFamily = FontFamily.Monospace
             )
         }
     }
