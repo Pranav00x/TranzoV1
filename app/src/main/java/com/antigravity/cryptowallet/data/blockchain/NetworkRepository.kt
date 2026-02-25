@@ -1,4 +1,4 @@
-pushpackage com.antigravity.cryptowallet.data.blockchain
+package com.antigravity.cryptowallet.data.blockchain
 
 import java.math.BigInteger
 import javax.inject.Inject
