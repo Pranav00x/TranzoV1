@@ -175,7 +175,7 @@ val BrutalistTypography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 10.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.dp.value.sp
+        letterSpacing = 0.sp
     )
 )
 
