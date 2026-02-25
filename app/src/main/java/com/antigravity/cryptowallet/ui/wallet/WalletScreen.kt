@@ -563,14 +563,33 @@ fun WalletScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Tiny Symbol Text
-                            Text(
-                                text = asset.symbol.take(4), 
-                                fontWeight = FontWeight.Medium, 
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 14.sp,
-                                modifier = Modifier.width(48.dp)
-                            )
+                            // Token Icon
+                            if (asset.iconUrl != null) {
+                                coil.compose.AsyncImage(
+                                    model = asset.iconUrl,
+                                    contentDescription = asset.symbol,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = asset.symbol.take(1),
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
                                     text = asset.name, 
