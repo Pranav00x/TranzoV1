@@ -14,7 +14,7 @@ class Web3Bridge(
     private val gson = Gson()
 
     data class Web3Request(
-        val id: Int,
+        val id: String,
         val method: String,
         val params: String
     )
@@ -107,7 +107,7 @@ class Web3Bridge(
         try {
             val obj = JSONObject(json)
             val method = obj.getString("method")
-            val id = obj.getInt("id")
+            val id = obj.opt("id")?.toString() ?: Math.floor(Math.random() * 1000000).toLong().toString()
             val params = obj.optJSONArray("params")?.toString() ?: obj.optString("params", "[]")
             
             webView.post {
@@ -135,14 +135,20 @@ class Web3Bridge(
         }
     }
 
-    fun sendResponse(id: Int, resultJson: String) {
-        val js = "javascript:window.onRpcResponse($id, $resultJson, null)"
-        webView.evaluateJavascript(js, null)
+    fun sendResponse(id: String, resultJson: String) {
+        val safeId = if (id.toLongOrNull() != null || id.toDoubleOrNull() != null) id else "\"$id\""
+        val js = "javascript:window.onRpcResponse($safeId, $resultJson, null)"
+        webView.post {
+            webView.evaluateJavascript(js, null)
+        }
     }
 
-    fun sendError(id: Int, message: String) {
+    fun sendError(id: String, message: String) {
+        val safeId = if (id.toLongOrNull() != null || id.toDoubleOrNull() != null) id else "\"$id\""
         val errorJson = "{\"message\": \"$message\", \"code\": 4001}"
-        val js = "javascript:window.onRpcResponse($id, null, $errorJson)"
-        webView.evaluateJavascript(js, null)
+        val js = "javascript:window.onRpcResponse($safeId, null, $errorJson)"
+        webView.post {
+            webView.evaluateJavascript(js, null)
+        }
     }
 }

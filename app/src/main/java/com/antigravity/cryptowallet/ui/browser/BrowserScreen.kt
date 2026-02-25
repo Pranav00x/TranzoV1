@@ -411,6 +411,21 @@ fun BrowserWebView(
                 addJavascriptInterface(bridge, "androidWallet")
                 
                 webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                        val urlStr = request?.url?.toString() ?: return false
+                        if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
+                            try {
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(urlStr))
+                                context.startActivity(intent)
+                                return true
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                return true // Prevent WebView from showing an error for unsupported custom URL schemes
+                            }
+                        }
+                        return false // Let WebView load HTTP/HTTPS URLs
+                    }
+
                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                          super.onPageStarted(view, url, favicon)
                          val currentBridge = (view?.tag as? Web3Bridge) ?: bridge
