@@ -48,64 +48,44 @@ fun BrutalistButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    val offset = if (isPressed) 0.dp else 3.dp
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp) // Reduced from 60dp
+            .height(52.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick
             )
+            .background(
+                if (enabled) finalBackgroundColor else MaterialTheme.colorScheme.onBackground.copy(alpha=0.1f),
+                RoundedCornerShape(24.dp)
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        // Shadow Layer
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .offset(3.dp, 3.dp)
-                .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(24.dp))
-        )
-
-        // Main Button Layer
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .offset(x = 3.dp - offset, y = 3.dp - offset)
-                .background(
-                    if (enabled) finalBackgroundColor else Color.Gray,
-                    RoundedCornerShape(24.dp)
-                )
-                .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = finalContentColor
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                }
-                Text(
-                    text = text.uppercase(),
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        color = if (enabled) finalContentColor else Color.LightGray,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 13.sp,
-                        letterSpacing = 1.sp
-                    )
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = finalContentColor
                 )
+                Spacer(modifier = Modifier.width(6.dp))
             }
+            Text(
+                text = text.uppercase(),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    color = if (enabled) finalContentColor else Color.LightGray,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    letterSpacing = 1.sp
+                )
+            )
         }
     }
 }
@@ -157,14 +137,11 @@ fun BrutalistHeader(text: String) {
     Box(
         modifier = Modifier
             .padding(vertical = 12.dp)
-            .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
             text = text.uppercase(),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 1.sp
         )
@@ -228,8 +205,7 @@ fun BrutalistBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .border(2.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(32.dp))
-            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(32.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
             .clip(RoundedCornerShape(32.dp))
             .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -242,7 +218,6 @@ fun BrutalistBottomBar(
                     .fillMaxHeight()
                     .padding(4.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent)
                     .clickable { onItemClick(item.route) }
                     .padding(4.dp),
                 contentAlignment = Alignment.Center
@@ -251,14 +226,14 @@ fun BrutalistBottomBar(
                     androidx.compose.material3.Icon(
                         imageVector = item.icon,
                         contentDescription = item.title,
-                        tint = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground,
+                        tint = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.4f),
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = item.title.uppercase(),
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.4f)
                     )
                 }
             }

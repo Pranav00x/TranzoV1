@@ -28,8 +28,8 @@ class AssetRepository @Inject constructor(
     private val coinGeckoApi: CoinGeckoApi,
     private val transactionRepository: TransactionRepository
 ) {
-    private val _assets = MutableSharedFlow<List<AssetUiModel>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val assets = _assets.asSharedFlow()
+    private val _assets = kotlinx.coroutines.flow.MutableStateFlow<List<AssetUiModel>>(emptyList())
+    val assets: kotlinx.coroutines.flow.StateFlow<List<AssetUiModel>> = _assets.asStateFlow()
 
     suspend fun refreshAssets() = withContext(Dispatchers.IO) {
         if (!walletRepository.isWalletCreated()) return@withContext
@@ -156,7 +156,7 @@ class AssetRepository @Inject constructor(
         val nativeAssets = nativeAssetsDeferred.awaitAll().filterNotNull()
         val tokenAssets = tokenAssetsDeferred.awaitAll().filterNotNull()
         
-        _assets.tryEmit(nativeAssets + tokenAssets)
+        _assets.value = nativeAssets + tokenAssets
     }
 
     suspend fun addToken(address: String, symbol: String, decimals: Int, chainId: String, name: String) {

@@ -38,18 +38,18 @@ private val DefaultScheme = lightColorScheme(
 
 // Pure Dark Theme
 private val DarkScheme = darkColorScheme(
-    primary = Color(0xFF3B82F6),
-    onPrimary = White,
-    primaryContainer = Color(0xFF1E3A5F),
-    onPrimaryContainer = Color(0xFFB4D4FF),
-    background = Color(0xFF121212),
+    primary = White,
+    onPrimary = Black,
+    primaryContainer = Color(0xFF1E1E1E),
+    onPrimaryContainer = White,
+    background = Black,
     onBackground = White,
-    surface = Color(0xFF1E1E1E),
+    surface = Black,
     onSurface = White,
-    surfaceVariant = Color(0xFF2A2A2A),
-    onSurfaceVariant = Color(0xFFBBBBBB),
-    outline = Color(0xFF444444),
-    outlineVariant = Color(0xFF333333)
+    surfaceVariant = Color(0xFF111111),
+    onSurfaceVariant = Color(0xFF888888),
+    outline = Color(0xFF333333),
+    outlineVariant = Color(0xFF222222)
 )
 
 // Midnight Blue Theme
@@ -151,44 +151,44 @@ private val SunsetScheme = darkColorScheme(
 val BrutalistTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-0.25).sp
+        fontWeight = FontWeight.Medium,
+        fontSize = 24.sp,
+        lineHeight = 32.sp,
+        letterSpacing = (-0.5).sp
     ),
     displayMedium = TextStyle(
         fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp,
+        fontWeight = FontWeight.Medium,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 18.sp,
-        letterSpacing = 0.5.sp
+        lineHeight = 16.sp,
+        letterSpacing = 0.sp
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
         fontSize = 10.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.1.sp
+        letterSpacing = 0.dp.value.sp
     )
 )
 
 @Composable
 fun CryptoWalletTheme(
-    themeType: ThemeType = ThemeType.DEFAULT,
-    darkTheme: Boolean = androidx.compose.foundation.isSystemInDarkTheme(), // Kept for compatibility, ignored
+    themeType: ThemeType = ThemeType.DARK,
+    darkTheme: Boolean = true, // We will bypass system settings and just be a dark app
     content: @Composable () -> Unit
 ) {
     // Theme is now independent of system dark mode
-    // User's selected theme always takes precedence
+    // User's selected theme always takes precedence. Hard defaulting to pure dark.
     val colorScheme = when (themeType) {
-        ThemeType.DEFAULT -> DefaultScheme
+        ThemeType.DEFAULT -> DarkScheme
         ThemeType.DARK -> DarkScheme
         ThemeType.MIDNIGHT -> MidnightScheme
         ThemeType.OCEAN -> OceanScheme
