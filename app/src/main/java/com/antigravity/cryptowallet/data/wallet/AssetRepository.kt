@@ -67,8 +67,14 @@ class AssetRepository @Inject constructor(
         val nativeAssetsDeferred = networkRepository.networks.map { net ->
             async {
                 try {
-                    val balance = blockchainService.getBalance(net.rpcUrl, address)
-                    val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(18))
+                    val balance = blockchainService.getBalance(net.rpcUrl, address, net.id)
+                    
+                    val decimals = when (net.id) {
+                        "btc" -> 8
+                        "trx" -> 6
+                        else -> 18
+                    }
+                    val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(decimals))
                     
                     val marketData = marketMap[net.coingeckoId]
                     val price = marketData?.currentPrice ?: 0.0
@@ -107,7 +113,7 @@ class AssetRepository @Inject constructor(
                 try {
                     val net = networkRepository.getNetwork(token.chainId)
                     if (token.contractAddress != null) {
-                        val balance = blockchainService.getTokenBalance(net.rpcUrl, token.contractAddress, address)
+                        val balance = blockchainService.getTokenBalance(net.rpcUrl, token.contractAddress, address, net.id)
                         val tokenBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(token.decimals))
                         
                         val marketData = token.coingeckoId?.let { marketMap[it] }

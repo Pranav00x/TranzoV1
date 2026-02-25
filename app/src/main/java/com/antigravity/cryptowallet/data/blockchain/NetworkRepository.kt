@@ -30,7 +30,9 @@ class NetworkRepository @Inject constructor() {
         Network("matic", "Polygon", "https://polygon-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", "https://polygon-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", 137, "POL", "matic-network", "https://api.polygonscan.com/api"),
         Network("base", "Base", "https://base-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", "https://base-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", 8453, "ETH", "ethereum", "https://api.basescan.org/api"),
         Network("arb", "Arbitrum One", "https://arbitrum-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", "https://arbitrum-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", 42161, "ETH", "ethereum", "https://api.arbiscan.io/api"),
-        Network("op", "Optimism", "https://optimism-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", "https://optimism-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", 10, "ETH", "ethereum", "https://api-optimistic.etherscan.io/api")
+        Network("op", "Optimism", "https://optimism-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", "https://optimism-mainnet.infura.io/v3/2e73eb0da821430d818d929e16963fc3", 10, "ETH", "ethereum", "https://api-optimistic.etherscan.io/api"),
+        Network("trx", "Tron", "https://api.trongrid.io", "https://api.trongrid.io", 728126428, "TRX", "tron", "https://apilist.tronscan.org/api"),
+        Network("btc", "Bitcoin", "https://rpc.ankr.com/http/btc_api_version_missing", "https://rpc.ankr.com/http/btc_api_version_missing", 0, "BTC", "bitcoin", "https://mempool.space/api")
     ))
     
     val networksFlow: StateFlow<List<Network>> = _networksFlow.asStateFlow()

@@ -38,7 +38,12 @@ class BlockchainService @Inject constructor() {
         }
     }
 
-    suspend fun getBalance(rpcUrl: String, address: String): BigInteger = withContext(Dispatchers.IO) {
+    suspend fun getBalance(rpcUrl: String, address: String, networkId: String = "eth"): BigInteger = withContext(Dispatchers.IO) {
+        if (networkId == "btc" || networkId == "trx") {
+            // These chains do not support eth_getBalance via Web3J (Return 0 for now)
+            return@withContext BigInteger.ZERO
+        }
+    
         try {
             // Guard with timeout to prevent infinite hanging
             kotlinx.coroutines.withTimeout(15_000L) {
@@ -153,7 +158,9 @@ class BlockchainService @Inject constructor() {
         }
     }
 
-    suspend fun getTokenBalance(rpcUrl: String, tokenAddress: String, walletAddress: String): BigInteger = withContext(Dispatchers.IO) {
+    suspend fun getTokenBalance(rpcUrl: String, tokenAddress: String, walletAddress: String, networkId: String = "eth"): BigInteger = withContext(Dispatchers.IO) {
+        if (networkId == "btc" || networkId == "trx") return@withContext BigInteger.ZERO
+        
         try {
             kotlinx.coroutines.withTimeout(15_000L) {
                 val web3j = getWeb3j(rpcUrl)
