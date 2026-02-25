@@ -38,12 +38,13 @@ import com.antigravity.cryptowallet.ui.components.BrutalistButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import coil.compose.AsyncImage
 
 data class DApp(
     val name: String,
     val description: String,
     val url: String,
-    val iconChar: Char,
+    val iconUrl: String,
     val category: String,
     val color: Color
 )
@@ -67,14 +68,14 @@ fun BrowserScreen(
     val scope = rememberCoroutineScope()
 
     val dapps = listOf(
-        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", 'P', "DEFI", Color(0xFF1FC7D4)),
-        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", 'U', "DEFI", Color(0xFFFF007A)),
-        DApp("OpenSea", "NFT Marketplace", "https://opensea.io", 'O', "NFT", Color(0xFF2081E2)),
-        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", '1', "DEFI", Color(0xFF0C162D)),
-        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", 'A', "DEFI", Color(0xFFB6509E)),
-        DApp("Blur", "NFT Exchange", "https://blur.io", 'B', "NFT", Color(0xFFFF5200)),
-        DApp("Lens", "Web3 Social", "https://www.lens.xyz", 'L', "SOCIAL", Color(0xFFABFE2C)),
-        DApp("Snapshot", "DAO Voting", "https://snapshot.org", 'S', "DAO", Color(0xFFFFB503))
+        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://assets.coingecko.com/coins/images/12645/small/pancakeswap-cake-logo.png", "DEFI", Color.Transparent),
+        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png", "DEFI", Color.Transparent),
+        DApp("OpenSea", "NFT Marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/OpenSea-Full-Logo%20(light).png", "NFT", Color.Transparent),
+        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://assets.coingecko.com/coins/images/13469/small/1inch-token.png", "DEFI", Color.Transparent),
+        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://assets.coingecko.com/coins/images/12645/small/AAVE.png", "DEFI", Color.Transparent),
+        DApp("Blur", "NFT Exchange", "https://blur.io", "https://assets.coingecko.com/coins/images/28453/small/blur.png", "NFT", Color.Transparent),
+        DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DEFI", Color.Transparent),
+        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://assets.coingecko.com/coins/images/13573/small/Lido_DAO.png", "DEFI", Color.Transparent)
     )
 
     BackHandler(enabled = url.isNotEmpty()) {
@@ -195,8 +196,8 @@ fun BrowserTopBar(
     onNetworkClick: () -> Unit
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp
+        color = Color.Transparent, // Invisible Look
+        shadowElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -215,7 +216,8 @@ fun BrowserTopBar(
                 modifier = Modifier
                     .weight(1f)
                     .height(44.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(22.dp))
+                    // Semi-transparent without borders for the URL bar
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f), RoundedCornerShape(22.dp))
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -263,7 +265,8 @@ fun BrowserTopBar(
 
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = Color.Transparent, // Removed colored pill
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
                 modifier = Modifier
                     .clickable { onNetworkClick() }
                     .height(36.dp)
@@ -273,11 +276,11 @@ fun BrowserTopBar(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50), CircleShape))
+                    Box(modifier = Modifier.size(8.dp).background(Color(0xFF00C853), CircleShape))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         activeNetworkName.take(3).uppercase(), 
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
@@ -341,19 +344,14 @@ fun DAppIconItem(dapp: DApp, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
     ) {
-        Box(
+        AsyncImage(
+            model = dapp.iconUrl,
+            contentDescription = dapp.name,
             modifier = Modifier
-                .size(56.dp)
-                .background(dapp.color, RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                dapp.iconChar.toString(),
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha=0.05f))
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             dapp.name,
@@ -369,40 +367,39 @@ fun DAppListItem(dapp: DApp, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.5f), RoundedCornerShape(12.dp))
+            // Invisible style list UI
+            .background(Color.Transparent)
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
+        AsyncImage(
+            model = dapp.iconUrl,
+            contentDescription = dapp.name,
             modifier = Modifier
-                .size(48.dp)
-                .background(dapp.color, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                dapp.iconChar.toString(),
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha=0.05f))
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 dapp.name,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 dapp.description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                maxLines = 1,
+                fontSize = 11.sp
             )
         }
     }
+    // Faint divider
+    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)))
 }
 
 @Composable
