@@ -68,14 +68,14 @@ fun BrowserScreen(
     val scope = rememberCoroutineScope()
 
     val dapps = listOf(
-        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://assets.coingecko.com/coins/images/12645/small/pancakeswap-cake-logo.png", "DEFI", Color.Transparent),
-        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png", "DEFI", Color.Transparent),
-        DApp("OpenSea", "NFT Marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/OpenSea-Full-Logo%20(light).png", "NFT", Color.Transparent),
-        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://assets.coingecko.com/coins/images/13469/small/1inch-token.png", "DEFI", Color.Transparent),
-        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://assets.coingecko.com/coins/images/12645/small/AAVE.png", "DEFI", Color.Transparent),
+        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://cryptologos.cc/logos/pancakeswap-cake-logo.png", "DEFI", Color.Transparent),
+        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://cryptologos.cc/logos/uniswap-uni-logo.png", "DEFI", Color.Transparent),
+        DApp("OpenSea", "NFT Marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png", "NFT", Color.Transparent),
+        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://cryptologos.cc/logos/1inch-1inch-logo.png", "DEFI", Color.Transparent),
+        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://cryptologos.cc/logos/aave-aave-logo.png", "DEFI", Color.Transparent),
         DApp("Blur", "NFT Exchange", "https://blur.io", "https://assets.coingecko.com/coins/images/28453/small/blur.png", "NFT", Color.Transparent),
         DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DEFI", Color.Transparent),
-        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://assets.coingecko.com/coins/images/13573/small/Lido_DAO.png", "DEFI", Color.Transparent)
+        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://cryptologos.cc/logos/lido-dao-ldo-logo.png", "DEFI", Color.Transparent)
     )
 
     BackHandler(enabled = url.isNotEmpty()) {
@@ -295,45 +295,25 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text(
-                "Favorites",
+                "Popular DApps",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
-
-        item {
-             LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier.height(200.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(dapps.take(8)) { dapp ->
-                    DAppIconItem(dapp, onClick = { onDappClick(dapp) })
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "Explore",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
 
         items(dapps.size) { index ->
             DAppListItem(dapp = dapps[index], onClick = { onDappClick(dapps[index]) })
-            Spacer(modifier = Modifier.height(12.dp))
+        }
+        
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

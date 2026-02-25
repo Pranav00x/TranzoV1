@@ -64,15 +64,22 @@ class WalletViewModel @Inject constructor(
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
     val address: String
-        get() = walletRepository.getAddress(activeNetwork.id)
+        get() = walletRepository.getAddress(if (selectedNetworkId == "all") "eth" else selectedNetworkId)
     
     // Expose flow so UI re-renders when custom chains are added
     val networksFlow = networkRepository.networksFlow
+    
     val networks: List<com.antigravity.cryptowallet.data.blockchain.Network>
-        get() = networkRepository.networks
+        get() = listOf(com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")) + networkRepository.networks
         
-    var activeNetwork by mutableStateOf(networkRepository.activeNetwork)
+    var selectedNetworkId by mutableStateOf("all")
         private set
+
+    val activeNetwork: com.antigravity.cryptowallet.data.blockchain.Network
+        get() = if (selectedNetworkId == "all") 
+            com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")
+        else 
+            networkRepository.getNetwork(selectedNetworkId)
 
     // UI State
     var totalBalanceUsd by mutableStateOf("$0.00")
@@ -89,10 +96,14 @@ class WalletViewModel @Inject constructor(
     }
 
     fun switchNetwork(networkId: String) {
-        networkRepository.setActiveNetwork(networkId)
-        activeNetwork = networkRepository.activeNetwork
+        selectedNetworkId = networkId
+        if (networkId != "all") {
+            networkRepository.setActiveNetwork(networkId)
+        }
         updateDisplayedAssets()
-        refresh()
+        if (networkId != "all") {
+            refresh()
+        }
     }
     
     fun addNetwork(name: String, rpcUrl: String, chainId: Long, symbol: String, explorerUrl: String) {
@@ -150,12 +161,14 @@ class WalletViewModel @Inject constructor(
     }
     
     private fun updateDisplayedAssets() {
-        // Show all assets, not just filtered by network
-        // This ensures users can see their whole portfolio
-        assets = allAssets
+        if (selectedNetworkId == "all") {
+            assets = allAssets
+        } else {
+            assets = allAssets.filter { it.networkName == activeNetwork.name }
+        }
         
-        // Calculate total from ALL assets
-        val total = allAssets.sumOf { it.rawBalance * it.price }
+        // Calculate total from filtered assets
+        val total = assets.sumOf { it.rawBalance * it.price }
         totalBalanceUsd = String.format("$%.2f", total)
     }
 
@@ -181,7 +194,10 @@ fun WalletScreen(
         var showAddTokenDialog by remember { mutableStateOf(false) }
         var showNetworkSelector by remember { mutableStateOf(false) }
 
-        val networks by viewModel.networksFlow.collectAsState(initial = viewModel.networks)
+        val repoNetworks by viewModel.networksFlow.collectAsState(initial = emptyList())
+        val networks = remember(repoNetworks) {
+            listOf(com.antigravity.cryptowallet.data.blockchain.Network("all", "All Networks", "", "", 0, "ALL", "", "")) + (if (repoNetworks.isEmpty()) viewModel.networks.drop(1) else repoNetworks)
+        }
         var showAddNetworkDialog by remember { mutableStateOf(false) }
 
         if (showNetworkSelector) {
@@ -207,14 +223,14 @@ fun WalletScreen(
                                         viewModel.switchNetwork(net.id)
                                         showNetworkSelector = false
                                     }
-                                    .background(if (viewModel.activeNetwork.id == net.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                                    .border(if (viewModel.activeNetwork.id == net.id) 2.dp else 0.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
+                                .background(if (viewModel.selectedNetworkId == net.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                    .border(if (viewModel.selectedNetworkId == net.id) 2.dp else 0.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
                                     .clip(RoundedCornerShape(12.dp))
                                     .padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(net.name, color = if (viewModel.activeNetwork.id == net.id) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                                if (viewModel.activeNetwork.id == net.id) {
+                                Text(net.name, color = if (viewModel.selectedNetworkId == net.id) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                                if (viewModel.selectedNetworkId == net.id) {
                                     Text("ACTIVE", color = MaterialTheme.colorScheme.onPrimary, fontSize = 10.sp, fontWeight = FontWeight.Black)
                                 }
                             }

@@ -41,18 +41,18 @@ private val DefaultScheme = lightColorScheme(
     outlineVariant = Color(0xFFE0E0E0)
 )
 
-// Pure Dark Theme
+// Pure Dark Theme (Softer)
 private val DarkScheme = darkColorScheme(
     primary = White,
     onPrimary = Black,
-    primaryContainer = Color(0xFF1E1E1E),
+    primaryContainer = Color(0xFF2A2A2A),
     onPrimaryContainer = White,
-    background = Black,
+    background = Color(0xFF121212),
     onBackground = White,
-    surface = Black,
+    surface = Color(0xFF1A1A1A),
     onSurface = White,
-    surfaceVariant = Color(0xFF111111),
-    onSurfaceVariant = Color(0xFF888888),
+    surfaceVariant = Color(0xFF242424),
+    onSurfaceVariant = Color(0xFFA0A0A0),
     outline = Color(0xFF333333),
     outlineVariant = Color(0xFF222222)
 )

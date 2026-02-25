@@ -189,12 +189,12 @@ fun TransactionResultScreen(
                         TransactionStatus.FAILED -> "Transaction Failed"
                         TransactionStatus.PENDING -> "Processing..."
                     },
-                    fontSize = 26.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = contentColor
                 )
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 // Amount Display - Row to prevent overlap
                 Row(
@@ -204,7 +204,7 @@ fun TransactionResultScreen(
                 ) {
                     Text(
                         text = simpleFormatAmount(amount),
-                        fontSize = 42.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = contentColor,
                         maxLines = 1,
@@ -214,14 +214,14 @@ fun TransactionResultScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = symbol,
-                        fontSize = 24.sp, // Smaller symbol
+                        fontSize = 18.sp, // Smaller symbol
                         fontWeight = FontWeight.Medium,
                         color = primaryColor,
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
                 // Details Card
                 Card(
@@ -240,6 +240,17 @@ fun TransactionResultScreen(
                             iconVector = null,
                             isCopyable = true,
                             onCopy = { clipboardManager.setText(AnnotatedString(recipient)) }
+                        )
+
+                        Divider(color = Color.White.copy(alpha = 0.05f))
+                        
+                        // Timestamp Item
+                        val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
+                        val currentTime = remember { dateFormat.format(java.util.Date()) }
+                        DetailRow(
+                           label = "Time",
+                            value = currentTime,
+                            valueColor = contentColor.copy(alpha = 0.9f)
                         )
 
                         Divider(color = Color.White.copy(alpha = 0.05f))
