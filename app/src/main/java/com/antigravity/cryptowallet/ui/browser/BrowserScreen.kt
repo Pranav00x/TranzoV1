@@ -196,96 +196,106 @@ fun BrowserTopBar(
     onNetworkClick: () -> Unit
 ) {
     Surface(
-        color = Color.Transparent, // Invisible Look
+        color = MaterialTheme.colorScheme.background,
         shadowElevation = 0.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!isHome) {
-                IconButton(onClick = onHome, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onSurface)
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp)
-                    // Semi-transparent without borders for the URL bar
-                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f), RoundedCornerShape(22.dp))
-                    .padding(horizontal = 16.dp),
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.Default.Search, 
-                    contentDescription = null, 
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                BasicTextField(
-                    value = currentUrl,
-                    onValueChange = onValueChange,
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                    keyboardActions = KeyboardActions(onGo = { onGo() }),
-                    modifier = Modifier.weight(1f),
-                    decorationBox = { innerTextField ->
-                        if (currentUrl.isEmpty()) {
-                            Text(
-                                "Search DApps or Enter URL", 
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 14.sp
-                            )
+                if (!isHome) {
+                    Surface(
+                        shape = RoundedCornerShape(0.dp),
+                        color = MaterialTheme.colorScheme.background,
+                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground),
+                        modifier = Modifier.clickable { onHome() }.size(48.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onBackground)
                         }
-                        innerTextField()
-                    },
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-                )
-                if (currentUrl.isNotEmpty()) {
-                     IconButton(
-                         onClick = { onValueChange("") },
-                         modifier = Modifier.size(20.dp)
-                     ) {
-                         Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                     }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                 }
-            }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color.Transparent, // Removed colored pill
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
-                modifier = Modifier
-                    .clickable { onNetworkClick() }
-                    .height(36.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(0.dp),
+                    color = MaterialTheme.colorScheme.background,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground)
                 ) {
-                    Box(modifier = Modifier.size(8.dp).background(Color(0xFF00C853), CircleShape))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        activeNetworkName.take(3).uppercase(), 
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("HTTP://", style = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp), color = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        BasicTextField(
+                            value = currentUrl,
+                            onValueChange = onValueChange,
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onBackground
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                            keyboardActions = KeyboardActions(onGo = { onGo() }),
+                            modifier = Modifier.weight(1f),
+                            decorationBox = { innerTextField ->
+                                if (currentUrl.isEmpty()) {
+                                    Text(
+                                        "SEARCH_OR_ENTER_URL", 
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                                        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, fontWeight = FontWeight.Black)
+                                    )
+                                }
+                                innerTextField()
+                            },
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+                        )
+                        if (currentUrl.isNotEmpty()) {
+                             IconButton(
+                                 onClick = { onValueChange("") },
+                                 modifier = Modifier.size(24.dp)
+                             ) {
+                                 Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground)
+                             }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(0.dp),
+                    color = MaterialTheme.colorScheme.background,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground),
+                    modifier = Modifier
+                        .clickable { onNetworkClick() }
+                        .height(48.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.size(10.dp).background(Color(0xFF00FF00)))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            activeNetworkName.take(3).uppercase(), 
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
+            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
         }
     }
 }
@@ -295,91 +305,153 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
         item {
-            Text(
-                "Popular DApps",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        items(dapps.size) { index ->
-            DAppListItem(dapp = dapps[index], onClick = { onDappClick(dapps[index]) })
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.onBackground)
+                    .padding(24.dp)
+            ) {
+                Text(
+                    "DAPP BROWSER",
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-2).sp
+                    ),
+                    color = MaterialTheme.colorScheme.background
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "ACCESS THE UNRESTRICTED DECENTRALIZED WEB. NO TRACKING. PURE EXECUTION.",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 16.sp,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
+                )
+            }
+            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
         }
         
         item {
-            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                "// FEATURED_PROTOCOLS",
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(start = 24.dp, top = 32.dp, bottom = 24.dp)
+            )
+        }
+        
+        items((dapps.size + 1) / 2) { rowIndex ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val idx1 = rowIndex * 2
+                val idx2 = idx1 + 1
+                
+                DAppBrutalistCard(dapp = dapps[idx1], onClick = { onDappClick(dapps[idx1]) }, modifier = Modifier.weight(1f))
+                
+                if (idx2 < dapps.size) {
+                    DAppBrutalistCard(dapp = dapps[idx2], onClick = { onDappClick(dapps[idx2]) }, modifier = Modifier.weight(1f))
+                } else {
+                    Spacer(modifier = Modifier.weight(1f)) 
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-fun DAppIconItem(dapp: DApp, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        AsyncImage(
-            model = dapp.iconUrl,
-            contentDescription = dapp.name,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha=0.05f))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            dapp.name,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 1,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    }
-}
-
-@Composable
-fun DAppListItem(dapp: DApp, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
+fun DAppBrutalistCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(0.dp),
+        color = MaterialTheme.colorScheme.background,
+        border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onBackground),
+        modifier = modifier
             .fillMaxWidth()
-            // Invisible style list UI
-            .background(Color.Transparent)
             .clickable { onClick() }
-            .padding(vertical = 12.dp, horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = dapp.iconUrl,
-            contentDescription = dapp.name,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha=0.05f))
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(MaterialTheme.colorScheme.onBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = dapp.iconUrl,
+                    contentDescription = dapp.name,
+                    modifier = Modifier.size(46.dp).clip(RoundedCornerShape(0.dp)).background(MaterialTheme.colorScheme.background)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                dapp.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground
+                dapp.name.uppercase(),
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.5).sp
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1
             )
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                dapp.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                maxLines = 1,
-                fontSize = 11.sp
+                dapp.description.uppercase(),
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 14.sp
+                ),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                maxLines = 2
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "LAUNCH",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "->",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
-    // Faint divider
-    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)))
 }
 
 @Composable
@@ -458,46 +530,58 @@ fun NetworkSelector(
 ) {
      androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(0.dp),
+            border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.onBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    "Select Network",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    "// SELECT_NETWORK",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
-                LazyColumn {
+                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
                     items(networks.size) { index ->
                         val net = networks[index]
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onSelect(net) }
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(
-                                selected = net.id == activeNetworkId,
-                                onClick = { onSelect(net) },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = MaterialTheme.colorScheme.primary
-                                )
+                            Surface(
+                                shape = RoundedCornerShape(0.dp),
+                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else Color.Transparent,
+                                border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onBackground),
+                                modifier = Modifier.size(24.dp)
+                            ) {}
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                net.name.uppercase(), 
+                                style = TextStyle(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black
+                                ),
+                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(net.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                         }
                         if (index < networks.size - 1) {
-                            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 BrutalistButton(
-                    text = "Cancel",
+                    text = "CANCEL",
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     inverted = true
