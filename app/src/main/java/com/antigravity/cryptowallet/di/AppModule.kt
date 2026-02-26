@@ -95,4 +95,21 @@ object AppModule {
             .build()
             .create(ExplorerApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideAggregatorApi(): com.antigravity.cryptowallet.data.api.AggregatorApi {
+        val logging = HttpLoggingInterceptor()
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl("https://price-feed-backend.vercel.app/") // Production Vercel URL
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(com.antigravity.cryptowallet.data.api.AggregatorApi::class.java)
+    }
 }

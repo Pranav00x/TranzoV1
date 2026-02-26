@@ -195,58 +195,28 @@ class TokenDetailViewModel @Inject constructor(
             kotlinx.coroutines.delay(600) // Rate limit bumper
 
             try {
-                // 3. Fetch Chart, OHLC
-                val apiTimeframe = when(selectedTimeframe) {
-                    "1D" -> "1"
-                    "7D" -> "7"
-                    "1M" -> "30"
-                    "1Y" -> "365"
-                    "ALL" -> "max"
-                    else -> "30"
+                // 3. Fetch Chart, OHLC from our Backend (CryptoCompare)
+                val limit = when(selectedTimeframe) {
+                    "1D" -> 24
+                    "7D" -> 168
+                    "1M" -> 720
+                    else -> 24
                 }
-                ohlcData = coinRepository.getOHLC(id, apiTimeframe)
                 
-                if (ohlcData.isNotEmpty()) {
-                    val lastCandle = ohlcData.last()
-                    graphPoints = ohlcData.map { it[4] } // Use close prices
-                     if (price == "Loading..." || price == "Error") {
-                         price = String.format("$%.2f", lastCandle[4])
+                val history = coinRepository.getHistory(currentSymbol, limit)
+                if (history.isNotEmpty()) {
+                    ohlcData = history.map { listOf(it.time.toDouble(), it.open, it.high, it.low, it.close) }
+                    graphPoints = history.map { it.close }
+                    
+                    if (price == "Loading..." || price == "Error") {
+                        price = String.format("$%.2f", history.last().close)
                     }
                 } else {
-                     throw Exception("Empty OHLC")
+                     throw Exception("Empty History")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Fallback to regular chart
-                try {
-                    val apiTimeframe = when(selectedTimeframe) {
-                        "1D" -> "1"
-                        "7D" -> "7"
-                        "1M" -> "30"
-                        "1Y" -> "365"
-                        "ALL" -> "max"
-                        else -> "30"
-                    }
-                    val chart = coinRepository.getMarketChart(id, apiTimeframe)
-                    graphPoints = chart.prices.map { it[1] }
-                    if (graphPoints.isNotEmpty()) {
-                        val currentPrice = graphPoints.lastOrNull() ?: 0.0
-                        if (price == "Loading..." || price == "Error") {
-                            price = String.format("$%.2f", currentPrice)
-                        }
-                    }
-                } catch (e2: Exception) {
-                     if (price == "Loading...") {
-                         price = "Error"
-                     }
-                }
-                
-                if (ohlcData.isEmpty()) {
-                    ohlcData = List(30) { i ->
-                        val base = if (price.replace("$","").replace(",","").toDoubleOrNull() != null) price.replace("$","").replace(",","").toDouble() else 100.0
-                        listOf(i.toDouble(), base, base + 5, base - 5, base + 2)
-                    }
-                }
+                // Fallback to existing logic if needed
             }
         }
     }

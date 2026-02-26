@@ -25,7 +25,7 @@ class AssetRepository @Inject constructor(
     private val networkRepository: NetworkRepository,
     private val blockchainService: BlockchainService,
     private val tokenDao: TokenDao,
-    private val coinGeckoApi: CoinGeckoApi,
+    private val coinRepository: com.antigravity.cryptowallet.data.repository.CoinRepository,
     private val transactionRepository: TransactionRepository
 ) {
     private val _assets = kotlinx.coroutines.flow.MutableStateFlow<List<AssetUiModel>>(emptyList())
@@ -91,18 +91,9 @@ class AssetRepository @Inject constructor(
             _assets.value = placeholders
         }
 
-        // 2. Prepare list of CoinGecko IDs
-        val networkIds = networkRepository.networks.map { it.coingeckoId }
-        val tokenIds = allTokens.mapNotNull { it.coingeckoId }
-        val allIds = (networkIds + tokenIds).distinct().joinToString(",")
-        
-        val marketMap = try {
-            val markets = coinGeckoApi.getCoinsMarkets(ids = allIds)
-            markets.associateBy { it.id }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyMap()
-        }
+        // 2. Fetch Aggregated Prices from our Backend
+        val currentSymbols = (networkRepository.networks.map { it.symbol } + allTokens.map { it.symbol }).distinct()
+        val priceMap = coinRepository.getPrices(currentSymbols)
 
         // 3. Fetch Native Balances in Parallel
         val nativeAssetsDeferred = networkRepository.networks.map { net ->
@@ -118,8 +109,7 @@ class AssetRepository @Inject constructor(
                     }
                     val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(decimals))
                     
-                    val marketData = marketMap[net.coingeckoId]
-                    val price = marketData?.currentPrice ?: 0.0
+                    val price = priceMap[net.symbol] ?: 0.0
                     val balanceUsd = ethBalance.multiply(BigDecimal(price))
                     val imageUrl = when(net.id) {
                         "base" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png"
@@ -130,7 +120,7 @@ class AssetRepository @Inject constructor(
                         "trx" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/info/logo.png"
                         "eth" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png"
                         "btc" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png"
-                        else -> marketData?.image
+                        else -> "https://assets.coincap.io/assets/icons/${net.symbol.lowercase()}@2x.png"
                     }
 
                     val balanceStr = if (ethBalance.compareTo(BigDecimal.ZERO) == 0) {
@@ -169,10 +159,9 @@ class AssetRepository @Inject constructor(
                         val balance = blockchainService.getTokenBalance(net.rpcUrl, token.contractAddress, address, net.id)
                         val tokenBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(token.decimals))
                         
-                        val marketData = token.coingeckoId?.let { marketMap[it] }
-                        val price = marketData?.currentPrice ?: 0.0
+                        val price = priceMap[token.symbol] ?: 0.0
                         val balanceUsd = tokenBalance.multiply(BigDecimal(price))
-                        val imageUrl = marketData?.image
+                        val imageUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png"
     
                         val balanceStr = if (tokenBalance.compareTo(BigDecimal.ZERO) == 0) {
                             "0.00 ${token.symbol}"
