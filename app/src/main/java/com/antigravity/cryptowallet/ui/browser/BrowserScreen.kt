@@ -481,8 +481,8 @@ fun BrowserWebView(
                 val bridge = Web3Bridge(
                     webView = this, 
                     address = address, 
-                    chainIdProvider = { activeNetwork.chainId }, 
-                    rpcUrlProvider = { activeNetwork.rpcUrl }
+                    chainIdProvider = chainIdProvider, 
+                    rpcUrlProvider = rpcUrlProvider
                 ) { request ->
                     onPendingRequest(request, this.tag as? Web3Bridge ?: return@Web3Bridge)
                 }
