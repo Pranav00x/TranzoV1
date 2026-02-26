@@ -82,6 +82,12 @@ class Web3Bridge(
                         if (this._listeners && this._listeners[event]) {
                             this._listeners[event] = this._listeners[event].filter(cb => cb !== callback);
                         }
+                    },
+
+                    emit: function(event, data) {
+                        if (this._listeners && this._listeners[event]) {
+                            this._listeners[event].forEach(cb => cb(data));
+                        }
                     }
                 };
                 
@@ -107,7 +113,7 @@ class Web3Bridge(
         try {
             val obj = JSONObject(json)
             val method = obj.getString("method")
-            val id = obj.opt("id")?.toString() ?: Math.floor(Math.random() * 1000000).toLong().toString()
+            val id = if (!obj.isNull("id")) obj.get("id").toString() else Math.floor(Math.random() * 1000000).toLong().toString()
             val params = obj.optJSONArray("params")?.toString() ?: obj.optString("params", "[]")
             
             webView.post {
@@ -138,6 +144,13 @@ class Web3Bridge(
     fun sendResponse(id: String, resultJson: String) {
         val safeId = if (id.toLongOrNull() != null || id.toDoubleOrNull() != null) id else "\"$id\""
         val js = "javascript:window.onRpcResponse($safeId, $resultJson, null)"
+        webView.post {
+            webView.evaluateJavascript(js, null)
+        }
+    }
+
+    fun emitEvent(event: String, dataJson: String) {
+        val js = "javascript:if(window.ethereum && window.ethereum.emit) { window.ethereum.emit('$event', $dataJson); }"
         webView.post {
             webView.evaluateJavascript(js, null)
         }

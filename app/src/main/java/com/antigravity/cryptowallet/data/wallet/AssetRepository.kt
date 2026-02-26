@@ -49,6 +49,34 @@ class AssetRepository @Inject constructor(
         }
         val allTokens = tokenDao.getAllTokens().first()
 
+        // --- Fast UI Launch Placeholder Load ---
+        if (_assets.value.isEmpty()) {
+            val placeholders = networkRepository.networks.map { net ->
+                AssetUiModel(
+                    id = "native-${net.id}",
+                    symbol = net.symbol,
+                    name = net.name,
+                    balance = "0.00 ${net.symbol}",
+                    balanceUsd = "Loading",
+                    iconUrl = when(net.id) {
+                        "base" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png"
+                        "arb" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png"
+                        "op" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png"
+                        "bsc" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/info/logo.png"
+                        "matic" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png"
+                        "trx" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/info/logo.png"
+                        "eth" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png"
+                        "btc" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png"
+                        else -> "https://assets.coincap.io/assets/icons/${net.symbol.lowercase()}@2x.png"
+                    },
+                    networkName = net.name,
+                    rawBalance = 0.0,
+                    price = 0.0
+                )
+            }
+            _assets.value = placeholders
+        }
+
         // 2. Prepare list of CoinGecko IDs
         val networkIds = networkRepository.networks.map { it.coingeckoId }
         val tokenIds = allTokens.mapNotNull { it.coingeckoId }
@@ -79,7 +107,17 @@ class AssetRepository @Inject constructor(
                     val marketData = marketMap[net.coingeckoId]
                     val price = marketData?.currentPrice ?: 0.0
                     val balanceUsd = ethBalance.multiply(BigDecimal(price))
-                    val imageUrl = marketData?.image
+                    val imageUrl = when(net.id) {
+                        "base" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png"
+                        "arb" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png"
+                        "op" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png"
+                        "bsc" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/info/logo.png"
+                        "matic" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png"
+                        "trx" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/tron/info/logo.png"
+                        "eth" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png"
+                        "btc" -> "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png"
+                        else -> marketData?.image
+                    }
 
                     val balanceStr = if (ethBalance.compareTo(BigDecimal.ZERO) == 0) {
                         "0.00 ${net.symbol}"

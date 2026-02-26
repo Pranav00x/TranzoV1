@@ -605,7 +605,15 @@ private suspend fun handleWeb3RequestAsync(
         "personal_sign", "eth_sign" -> {
             try {
                 val paramsArray = org.json.JSONArray(request.params)
-                val message = paramsArray.getString(0)
+                var message = paramsArray.getString(0)
+                
+                // Handle out-of-spec DApps that pass address first instead of challenge
+                if (message.length == 42 && message.startsWith("0x") && paramsArray.length() > 1) {
+                    val potentialMessage = paramsArray.getString(1)
+                    if (potentialMessage.length != 42) {
+                         message = potentialMessage
+                    }
+                }
                 
                 val data = if (message.startsWith("0x")) {
                     org.web3j.utils.Numeric.hexStringToByteArray(message)
@@ -614,9 +622,10 @@ private suspend fun handleWeb3RequestAsync(
                 }
                 val signatureData = org.web3j.crypto.Sign.signPrefixedMessage(data, credentials.ecKeyPair)
                 
-                val r = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.r)
-                val s = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.s)
-                val v = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.v)
+                // Guarantee strictly exactly 64 chars of padding for r and s elements, and 2 for v
+                val r = signatureData.r.joinToString("") { "%02x".format(it) }
+                val s = signatureData.s.joinToString("") { "%02x".format(it) }
+                val v = signatureData.v.joinToString("") { "%02x".format(it) }
                 val signature = "0x$r$s$v"
                 
                 withContext(Dispatchers.Main) {
@@ -639,9 +648,9 @@ private suspend fun handleWeb3RequestAsync(
                 val dataHash = org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8))
                 val signatureData = org.web3j.crypto.Sign.signMessage(dataHash, credentials.ecKeyPair, false)
                 
-                val r = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.r)
-                val s = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.s)
-                val v = org.web3j.utils.Numeric.toHexStringNoPrefix(signatureData.v)
+                val r = signatureData.r.joinToString("") { "%02x".format(it) }
+                val s = signatureData.s.joinToString("") { "%02x".format(it) }
+                val v = signatureData.v.joinToString("") { "%02x".format(it) }
                 val signature = "0x$r$s$v"
                 
                 withContext(Dispatchers.Main) {
@@ -657,6 +666,7 @@ private suspend fun handleWeb3RequestAsync(
         "eth_requestAccounts" -> {
             withContext(Dispatchers.Main) {
                 bridge?.sendResponse(request.id, "[\"${credentials.address}\"]")
+                bridge?.emitEvent("accountsChanged", "[\"${credentials.address}\"]")
             }
         }
         "wallet_switchEthereumChain" -> {
