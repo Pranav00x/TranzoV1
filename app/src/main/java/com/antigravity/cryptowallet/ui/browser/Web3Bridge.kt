@@ -9,6 +9,7 @@ class Web3Bridge(
     private val webView: WebView,
     private val address: String,
     private val chainIdProvider: () -> Long,
+    private val rpcUrlProvider: () -> String,
     private val onActionRequest: (Web3Request) -> Unit
 ) {
     private val gson = Gson()
@@ -36,6 +37,28 @@ class Web3Bridge(
                     selectedAddress: address,
                     
                     request: async function(payload) {
+                        const readMethods = ['eth_call', 'eth_estimateGas', 'eth_gasPrice', 'eth_blockNumber', 'eth_getBalance', 'eth_getCode', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_getTransactionByHash', 'eth_getLogs', 'eth_feeHistory'];
+                        if (readMethods.includes(payload.method)) {
+                            try {
+                                const response = await fetch('${rpcUrlProvider()}', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        id: payload.id || Math.floor(Math.random() * 10000),
+                                        method: payload.method,
+                                        params: payload.params || []
+                                    })
+                                });
+                                const data = await response.json();
+                                if (data.error) throw data.error;
+                                return data.result;
+                            } catch (e) {
+                                console.error('RPC Error:', e);
+                                throw e;
+                            }
+                        }
+                        
                         return new Promise((resolve, reject) => {
                             const id = payload.id || Math.floor(Math.random() * 1000000);
                             window.callbacks[id] = { resolve, reject };
@@ -101,7 +124,23 @@ class Web3Bridge(
                     }
                 };
                 
+                // EIP-6963 Announce Provider
+                const announceProvider = () => {
+                    const info = {
+                        uuid: '3506709E-7589-4D86-BB79-CE5F528D6FBD',
+                        name: 'Antigravity Wallet',
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwZmYwMCIgZD0iTTEyIDJMMiAyMmgyMGwtMTAtMjB6Ii8+PC9zdmc+',
+                        rdns: 'com.antigravity.wallet'
+                    };
+                    window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
+                        detail: Object.freeze({ info: info, provider: window.ethereum })
+                    }));
+                };
+                
+                window.addEventListener('eip6963:requestProvider', announceProvider);
+
                 setTimeout(() => {
+                    announceProvider();
                     window.dispatchEvent(new Event('ethereum#initialized'));
                 }, 100);
             })();
