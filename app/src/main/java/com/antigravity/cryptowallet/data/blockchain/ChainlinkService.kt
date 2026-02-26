@@ -63,7 +63,7 @@ class ChainlinkService @Inject constructor() {
             val function = Function(
                 "decimals",
                 emptyList(),
-                listOf(object : TypeReference<org.web3j.abi.datatypes.generated.Uint8()>() {})
+                listOf(object : TypeReference<org.web3j.abi.datatypes.generated.Uint8>() {})
             )
             val encodedFunction = FunctionEncoder.encode(function)
             val response = web3j.ethCall(
