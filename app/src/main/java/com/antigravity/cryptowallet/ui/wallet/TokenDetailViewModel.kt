@@ -86,6 +86,11 @@ class TokenDetailViewModel @Inject constructor(
                 val netId = tokenEntity?.chainId ?: when(symbol.uppercase()) {
                     "BNB" -> "bsc"
                     "MATIC", "POL" -> "matic"
+                    "TRX" -> "trx"
+                    "BTC" -> "btc"
+                    "ARB" -> "arb"
+                    "OP" -> "op"
+                    "BASE" -> "base"
                     "ETH" -> "eth"
                     else -> "eth"
                 }
@@ -133,6 +138,18 @@ class TokenDetailViewModel @Inject constructor(
                 "CAKE" -> "pancakeswap-token"
                 "MATIC", "POL" -> "matic-network"
                 "SOL" -> "solana"
+                "TRX" -> "tron"
+                "ARB" -> "arbitrum"
+                "OP" -> "optimism"
+                "BASE" -> "base"
+                "SHIB" -> "shiba-inu"
+                "PEPE" -> "pepe"
+                "DAI" -> "dai"
+                "UNI" -> "uniswap"
+                "AAVE" -> "aave"
+                "LDO" -> "lido-dao"
+                "WETH" -> "weth"
+                "BUSD" -> "binance-usd"
                 else -> "ethereum"
             }
 
@@ -165,9 +182,14 @@ class TokenDetailViewModel @Inject constructor(
                     "ETH" -> "Ethereum is a decentralized, open-source blockchain with smart contract functionality. Ether (ETH) is the native cryptocurrency of the platform."
                     "BNB" -> "BNB is the native cryptocurrency of the Binance ecosystem and powers the Binance Smart Chain."
                     "MATIC", "POL" -> "Polygon is a protocol and a framework for building and connecting Ethereum-compatible blockchain networks."
+                    "TRX" -> "TRON is a blockchain-based decentralized operating system much like Ethereum that aims to advance the decentralization of the Internet and its infrastructure."
+                    "BTC" -> "Bitcoin is a decentralized cryptocurrency originally described in a 2008 whitepaper by a person, or group of people, using the alias Satoshi Nakamoto."
+                    "ARB" -> "Arbitrum is a suite of Ethereum scaling solutions that enable high-throughput, low cost smart contracts while remaining trustlessly secure."
+                    "OP" -> "Optimism is a low-cost and lightning-fast Ethereum L2 blockchain."
+                    "BASE" -> "Base is a secure, low-cost, builder-friendly Ethereum L2 built to bring the next billion users onchain."
                     else -> "Failed to load detailed info for $symbol."
                 }
-                contractAddress = if (symbol.uppercase() == "ETH" || symbol.uppercase() == "BNB") "Native Token" else ""
+                contractAddress = if (symbol.uppercase() in listOf("ETH", "BNB", "TRX", "BTC", "ARB", "OP", "BASE")) "Native Token" else ""
             }
             
             kotlinx.coroutines.delay(600) // Rate limit bumper
