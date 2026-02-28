@@ -59,9 +59,9 @@ class CoinRepository @Inject constructor(
         }
     }
 
-    suspend fun getHistory(symbol: String, limit: Int): List<com.antigravity.cryptowallet.data.api.HistoryItem> {
+    suspend fun getHistory(symbol: String, limit: Int, interval: String = "hour"): List<com.antigravity.cryptowallet.data.api.HistoryItem> {
         return try {
-            aggregatorApi.getHistory(symbol, limit)
+            aggregatorApi.getHistory(symbol, limit, interval)
         } catch (e: Exception) {
             emptyList()
         }

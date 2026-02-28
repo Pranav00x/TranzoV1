@@ -12,7 +12,8 @@ interface AggregatorApi {
     @GET("v1/history")
     suspend fun getHistory(
         @Query("symbol") symbol: String,
-        @Query("limit") limit: Int = 24
+        @Query("limit") limit: Int = 24,
+        @Query("interval") interval: String = "hour"
     ): List<HistoryItem>
 }
 

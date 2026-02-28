@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -172,6 +174,8 @@ fun TokenDetailScreen(
 
         // Graph Section
         val ohlc = viewModel.ohlcData
+        var selectedPrice by remember { mutableStateOf<Double?>(null) }
+        var selectedTime by remember { mutableStateOf<Long?>(null) }
         
         // Timeframe Selector
         Row(
@@ -181,26 +185,66 @@ fun TokenDetailScreen(
         ) {
             val timeframes = listOf("1D", "7D", "1M", "1Y", "ALL")
             timeframes.forEach { tf ->
-                val isSelected = viewModel.selectedTimeframe == tf
-                Text(
-                    text = tf,
-                    fontSize = 12.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Gray,
+                val isSelected = viewModel.selectedTimeframe.uppercase() == tf
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
                         .clickable { viewModel.setTimeframeAndReload(tf) }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                ) {
+                    Text(
+                        text = tf,
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.background else Color.Gray,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        if (selectedPrice != null) {
+            Text(
+                text = String.format("$%.2f", selectedPrice),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = trendColor
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp)
-                // Removed the harsh borders and background for the minimalist look
+                .height(240.dp)
+                .pointerInput(ohlc) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val index = (offset.x / size.width * ohlc.size).toInt().coerceIn(0, ohlc.size - 1)
+                            if (ohlc.isNotEmpty()) {
+                                selectedPrice = ohlc[index][4]
+                                selectedTime = ohlc[index][0].toLong()
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            val index = (change.position.x / size.width * ohlc.size).toInt().coerceIn(0, ohlc.size - 1)
+                            if (ohlc.isNotEmpty()) {
+                                selectedPrice = ohlc[index][1]
+                                selectedTime = ohlc[index][0].toLong()
+                            }
+                        },
+                        onDragEnd = {
+                            selectedPrice = null
+                            selectedTime = null
+                        },
+                        onDragCancel = {
+                            selectedPrice = null
+                            selectedTime = null
+                        }
+                    )
+                }
         ) {
             if (ohlc.isNotEmpty()) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -211,43 +255,59 @@ fun TokenDetailScreen(
                     val minOverall = ohlc.minOf { it[3] }
                     val range = (maxOverall - minOverall).coerceAtLeast(0.0001)
                     
-                    val candleWidth = w / ohlc.size
-                    val spacing = candleWidth * 0.2f
+                    val useLineChart = ohlc.size > 100 // Smooth line for long timeframes
                     
-                    ohlc.forEachIndexed { i, candle ->
-                        val open = candle[1]
-                        val high = candle[2]
-                        val low = candle[3]
-                        val close = candle[4]
-                        
-                        val isGreen = close >= open
-                        val color = if (isGreen) Color(0xFF00C853) else Color.Red
-                        
-                        val x = i * candleWidth + spacing / 2
-                        
-                        fun normalize(v: Double) = h - ((v - minOverall).toFloat() / range.toFloat()) * h
-                        
-                        val yHigh = normalize(high)
-                        val yLow = normalize(low)
-                        val yOpen = normalize(open)
-                        val yClose = normalize(close)
-                        
-                        drawLine(
-                            color = color,
-                            start = Offset(x + (candleWidth - spacing) / 2, yHigh),
-                            end = Offset(x + (candleWidth - spacing) / 2, yLow),
-                            strokeWidth = 1.dp.toPx()
+                    if (useLineChart) {
+                        val path = androidx.compose.ui.graphics.Path()
+                        ohlc.forEachIndexed { i, candle ->
+                            val x = i * (w / (ohlc.size - 1))
+                            val y = h - ((candle[4] - minOverall).toFloat() / range.toFloat()) * h
+                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                        }
+                        drawPath(
+                            path = path,
+                            color = trendColor,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
                         )
+                    } else {
+                        val candleWidth = w / ohlc.size
+                        val spacing = candleWidth * 0.2f
                         
-                        val top = kotlin.math.min(yOpen, yClose)
-                        val bottom = kotlin.math.max(yOpen, yClose)
-                        val rectHeight = (bottom - top).coerceAtLeast(1f)
-                        
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(x, top),
-                            size = Size(candleWidth - spacing, rectHeight)
-                        )
+                        ohlc.forEachIndexed { i, candle ->
+                            val open = candle[1]
+                            val high = candle[2]
+                            val low = candle[3]
+                            val close = candle[4]
+                            
+                            val isGreen = close >= open
+                            val color = if (isGreen) Color(0xFF00C853) else Color.Red
+                            
+                            val x = i * candleWidth + spacing / 2
+                            
+                            fun normalize(v: Double) = h - ((v - minOverall).toFloat() / range.toFloat()) * h
+                            
+                            val yHigh = normalize(high)
+                            val yLow = normalize(low)
+                            val yOpen = normalize(open)
+                            val yClose = normalize(close)
+                            
+                            drawLine(
+                                color = color,
+                                start = Offset(x + (candleWidth - spacing) / 2, yHigh),
+                                end = Offset(x + (candleWidth - spacing) / 2, yLow),
+                                strokeWidth = 1.dp.toPx()
+                            )
+                            
+                            val top = kotlin.math.min(yOpen, yClose)
+                            val bottom = kotlin.math.max(yOpen, yClose)
+                            val rectHeight = (bottom - top).coerceAtLeast(1f)
+                            
+                            drawRect(
+                                color = color,
+                                topLeft = Offset(x, top),
+                                size = Size(candleWidth - spacing, rectHeight)
+                            )
+                        }
                     }
                 }
             } else {

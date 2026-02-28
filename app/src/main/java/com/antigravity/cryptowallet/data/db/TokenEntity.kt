@@ -13,5 +13,8 @@ data class TokenEntity(
     val chainId: String, // eth, matic, etc.
     val coingeckoId: String? = null,
     val logoUrl: String? = null,
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    val description: String? = null,
+    val lastBalance: String? = null,
+    val lastBalanceUsd: String? = null
 )

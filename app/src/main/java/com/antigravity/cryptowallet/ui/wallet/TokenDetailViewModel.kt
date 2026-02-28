@@ -150,16 +150,29 @@ class TokenDetailViewModel @Inject constructor(
                 "LDO" -> "lido-dao"
                 "WETH" -> "weth"
                 "BUSD" -> "binance-usd"
-                else -> "ethereum"
+                else -> "" // Don't fallback to ethereum for custom tokens
+            }
+
+            // Immediately show cached description
+            if (tokenEntity?.description != null) {
+                description = tokenEntity.description
             }
 
             // Execute fetching sequentially with delays to avoid CoinGecko 429 Rate Limits
             try {
                 // 1. Fast Price Fetch
-                val priceMap = coinRepository.getSimplePrice(id)
-                val simplePrice = priceMap[id]?.get("usd") ?: 0.0
-                if (simplePrice > 0) {
-                     price = String.format("$%.2f", simplePrice)
+                if (id.isNotEmpty()) {
+                    val priceMap = coinRepository.getSimplePrice(id)
+                    val simplePrice = priceMap[id]?.get("usd") ?: 0.0
+                    if (simplePrice > 0) {
+                         price = String.format("$%.2f", simplePrice)
+                    }
+                } else {
+                    // Custom token price from our aggregator?
+                    val simplePrice = coinRepository.getPrices(listOf(symbol))[symbol] ?: 0.0
+                    if (simplePrice > 0) {
+                        price = String.format("$%.2f", simplePrice)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -169,41 +182,62 @@ class TokenDetailViewModel @Inject constructor(
 
             try {
                 // 2. Fetch Info
-                val info = coinRepository.getCoinInfo(id)
-                val rawDescription = info.description.en
-                description = rawDescription.replace(Regex("<.*?>"), "") 
-                    .take(300) + (if (rawDescription.length > 300) "..." else "")
-                
-                val rawAddr = info.platforms?.entries?.firstOrNull()?.value
-                contractAddress = if (!rawAddr.isNullOrEmpty()) rawAddr else "Native Token"
+                if (id.isNotEmpty()) {
+                    val info = coinRepository.getCoinInfo(id)
+                    val rawDescription = info.description.en
+                    val formattedDescription = rawDescription.replace(Regex("<.*?>"), "") 
+                        .take(300) + (if (rawDescription.length > 300) "..." else "")
+                    
+                    description = formattedDescription
+                    // Save to DB
+                    tokenEntity?.let { tokenDao.updateDescription(it.id, formattedDescription) }
+                    
+                    val rawAddr = info.platforms?.entries?.firstOrNull()?.value
+                    contractAddress = if (!rawAddr.isNullOrEmpty()) rawAddr else "Native Token"
+                } else {
+                    contractAddress = if (symbol.uppercase() in listOf("ETH", "BNB", "TRX", "BTC", "ARB", "OP", "BASE")) "Native Token" else "Custom Token"
+                    if (description == "Loading..." || description.startsWith("Failed")) {
+                         description = "Advanced $symbol token on ${currentNetId.uppercase()} network."
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                description = when(symbol.uppercase()) {
-                    "ETH" -> "Ethereum is a decentralized, open-source blockchain with smart contract functionality. Ether (ETH) is the native cryptocurrency of the platform."
-                    "BNB" -> "BNB is the native cryptocurrency of the Binance ecosystem and powers the Binance Smart Chain."
-                    "MATIC", "POL" -> "Polygon is a protocol and a framework for building and connecting Ethereum-compatible blockchain networks."
-                    "TRX" -> "TRON is a blockchain-based decentralized operating system much like Ethereum that aims to advance the decentralization of the Internet and its infrastructure."
-                    "BTC" -> "Bitcoin is a decentralized cryptocurrency originally described in a 2008 whitepaper by a person, or group of people, using the alias Satoshi Nakamoto."
-                    "ARB" -> "Arbitrum is a suite of Ethereum scaling solutions that enable high-throughput, low cost smart contracts while remaining trustlessly secure."
-                    "OP" -> "Optimism is a low-cost and lightning-fast Ethereum L2 blockchain."
-                    "BASE" -> "Base is a secure, low-cost, builder-friendly Ethereum L2 built to bring the next billion users onchain."
-                    else -> "Failed to load detailed info for $symbol."
+                if (description == "Loading...") {
+                    description = when(symbol.uppercase()) {
+                        "ETH" -> "Ethereum is a decentralized, open-source blockchain with smart contract functionality. Ether (ETH) is the native cryptocurrency of the platform."
+                        "BNB" -> "BNB is the native cryptocurrency of the Binance ecosystem and powers the Binance Smart Chain."
+                        "MATIC", "POL" -> "Polygon is a protocol and a framework for building and connecting Ethereum-compatible blockchain networks."
+                        "TRX" -> "TRON is a blockchain-based decentralized operating system much like Ethereum that aims to advance the decentralization of the Internet and its infrastructure."
+                        "BTC" -> "Bitcoin is a decentralized cryptocurrency originally described in a 2008 whitepaper by a person, or group of people, using the alias Satoshi Nakamoto."
+                        "ARB" -> "Arbitrum is a suite of Ethereum scaling solutions that enable high-throughput, low cost smart contracts while remaining trustlessly secure."
+                        "OP" -> "Optimism is a low-cost and lightning-fast Ethereum L2 blockchain."
+                        "BASE" -> "Base is a secure, low-cost, builder-friendly Ethereum L2 built to bring the next billion users onchain."
+                        else -> "Failed to load detailed info for $symbol."
+                    }
                 }
                 contractAddress = if (symbol.uppercase() in listOf("ETH", "BNB", "TRX", "BTC", "ARB", "OP", "BASE")) "Native Token" else ""
             }
             
             kotlinx.coroutines.delay(600) // Rate limit bumper
 
-            try {
                 // 3. Fetch Chart, OHLC from our Backend (CryptoCompare)
-                val limit = when(selectedTimeframe) {
+                var intervalResult = "hour"
+                val limit = when(selectedTimeframe.uppercase()) {
                     "1D" -> 24
                     "7D" -> 168
                     "1M" -> 720
+                    "1Y" -> {
+                        intervalResult = "day"
+                        365
+                    }
+                    "ALL" -> {
+                        intervalResult = "day"
+                        2000
+                    }
                     else -> 24
                 }
                 
-                val history = coinRepository.getHistory(currentSymbol, limit)
+                val history = coinRepository.getHistory(currentSymbol, limit, intervalResult)
                 if (history.isNotEmpty()) {
                     ohlcData = history.map { listOf(it.time.toDouble(), it.open, it.high, it.low, it.close) }
                     graphPoints = history.map { it.close }
@@ -216,7 +250,6 @@ class TokenDetailViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Fallback to existing logic if needed
             }
         }
     }
