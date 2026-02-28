@@ -23,7 +23,7 @@ class TransactionRepository @Inject constructor(
 ) {
     val transactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
 
-    suspend fun refreshTransactions(address: String, network: com.antigravity.cryptowallet.data.blockchain.Network, contractAddress: String? = null, action: String? = null) = withContext(Dispatchers.IO) {
+    suspend fun refreshTransactions(address: String, network: Network, contractAddress: String? = null, action: String? = null) = withContext(Dispatchers.IO) {
         if (address.isBlank()) return@withContext
         try {
             val maxBlock = transactionDao.getMaxBlockNumber(network.name) ?: 0L

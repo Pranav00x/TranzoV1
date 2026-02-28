@@ -1,17 +1,14 @@
 package com.antigravity.cryptowallet.data.wallet
 
-import com.antigravity.cryptowallet.data.api.CoinGeckoApi
 import com.antigravity.cryptowallet.data.blockchain.BlockchainService
 import com.antigravity.cryptowallet.data.blockchain.NetworkRepository
 import com.antigravity.cryptowallet.data.db.TokenDao
 import com.antigravity.cryptowallet.data.db.TokenEntity
 import com.antigravity.cryptowallet.data.models.AssetUiModel
-import com.antigravity.cryptowallet.data.models.CoinMarketItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -163,24 +160,26 @@ class AssetRepository @Inject constructor(
             }
         }
 
-        // 5. Update Transactions (Non-blocking)
-        initialNetworks.forEach { net ->
-             launch {
-                 try {
-                     val address = walletRepository.getAddress(net.id)
-                     transactionRepository.refreshTransactions(address, net)
-                     transactionRepository.checkPendingTransactions(net.rpcUrl)
-                 } catch (e: Exception) { }
-             }
-        }
-        
-        initialTokens.filter { it.contractAddress != null }.forEach { token ->
-            launch {
-                try {
-                    val net = networkRepository.getNetwork(token.chainId)
-                    val address = walletRepository.getAddress(net.id)
-                    transactionRepository.refreshTransactions(address, net, token.contractAddress)
-                } catch (e: Exception) { }
+        // 5. Update Transactions (Non-blocking) - use coroutineScope to get a scope for launch
+        coroutineScope {
+            initialNetworks.forEach { net ->
+                launch {
+                    try {
+                        val address = walletRepository.getAddress(net.id)
+                        transactionRepository.refreshTransactions(address, net)
+                        transactionRepository.checkPendingTransactions(net.rpcUrl)
+                    } catch (e: Exception) { }
+                }
+            }
+            
+            initialTokens.filter { it.contractAddress != null }.forEach { token ->
+                launch {
+                    try {
+                        val net = networkRepository.getNetwork(token.chainId)
+                        val address = walletRepository.getAddress(net.id)
+                        transactionRepository.refreshTransactions(address, net, token.contractAddress)
+                    } catch (e: Exception) { }
+                }
             }
         }
 
