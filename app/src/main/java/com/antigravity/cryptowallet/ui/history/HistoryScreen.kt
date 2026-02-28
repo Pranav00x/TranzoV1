@@ -140,7 +140,7 @@ fun HistoryScreen(
                             tx = tx,
                             onClick = { selectedTransaction = tx }
                         )
-                        Divider(
+                        HorizontalDivider(
                             modifier = Modifier.padding(start = 56.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )

@@ -42,7 +42,10 @@ class HistoryViewModel @Inject constructor(
             
             networkRepository.networks.forEach { network ->
                 val address = walletRepository.getAddress(network.id)
-                repository.refreshTransactions(address, network)
+                // Refresh native transactions
+                repository.refreshTransactions(address, network, action = "txlist")
+                // Refresh all token transactions for this address
+                repository.refreshTransactions(address, network, action = "tokentx")
             }
         }
     }

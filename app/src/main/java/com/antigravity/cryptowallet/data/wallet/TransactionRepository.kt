@@ -23,7 +23,7 @@ class TransactionRepository @Inject constructor(
 ) {
     val transactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
 
-    suspend fun refreshTransactions(address: String, network: Network, contractAddress: String? = null) = withContext(Dispatchers.IO) {
+    suspend fun refreshTransactions(address: String, network: com.antigravity.cryptowallet.data.blockchain.Network, contractAddress: String? = null, action: String? = null) = withContext(Dispatchers.IO) {
         if (address.isBlank()) return@withContext
         try {
             val maxBlock = transactionDao.getMaxBlockNumber(network.name) ?: 0L
@@ -49,7 +49,7 @@ class TransactionRepository @Inject constructor(
                     // Etherscan style
                     explorerApi.getTransactionList(
                         url = network.explorerApiUrl,
-                        action = if (contractAddress != null) "tokentx" else "txlist",
+                        action = action ?: (if (contractAddress != null) "tokentx" else "txlist"),
                         address = address,
                         contractaddress = contractAddress,
                         apikey = network.explorerApiKey.takeIf { it.isNotBlank() },
@@ -133,11 +133,12 @@ class TransactionRepository @Inject constructor(
                                     val value = tx.get("value")?.asString ?: "0"
                                     val timestamp = (tx.get("timeStamp")?.asLong ?: 0L) * 1000L
                                     val tokenSymbol = tx.get("tokenSymbol")?.asString ?: network.symbol
+                                    val tokenDecimal = tx.get("tokenDecimal")?.asInt ?: network.decimals
                                     entities.add(TransactionEntity(
                                         hash = tx.get("hash")?.asString ?: "",
                                         fromAddress = tx.get("from")?.asString ?: "",
                                         toAddress = tx.get("to")?.asString ?: "",
-                                        value = BigDecimal(value).divide(BigDecimal.TEN.pow(network.decimals)).toPlainString(),
+                                        value = BigDecimal(value).divide(BigDecimal.TEN.pow(tokenDecimal)).toPlainString(),
                                         symbol = tokenSymbol,
                                         timestamp = timestamp,
                                         type = if (tx.get("from")?.asString?.lowercase() == address.lowercase()) "send" else "receive",

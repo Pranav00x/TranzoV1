@@ -166,10 +166,26 @@ fun TransferScreen(
                     icon = if (isSending) null else Icons.Default.Send,
                     onClick = {
                         if (recipientAddress.isNotBlank() && amount.isNotBlank() && selectedAsset != null) {
-                            val evmRegex = Regex("^0x[a-fA-F0-9]{40}$")
-                            if (!evmRegex.matches(recipientAddress)) {
-                                errorMsg = "Invalid EVM Address"
-                                return@BrutalistButton
+                            val isEvm = selectedAsset!!.id.contains("eth") || selectedAsset!!.id.contains("bsc") || selectedAsset!!.id.contains("matic") || selectedAsset!!.id.contains("base") || selectedAsset!!.id.contains("arb") || selectedAsset!!.id.contains("op") || (selectedAsset!!.id.startsWith("token-") && !selectedAsset!!.networkName.contains("tron", ignoreCase = true))
+                            
+                            if (isEvm) {
+                                val evmRegex = Regex("^0x[a-fA-F0-9]{40}$")
+                                if (!evmRegex.matches(recipientAddress)) {
+                                    errorMsg = "Invalid EVM Address"
+                                    return@BrutalistButton
+                                }
+                            } else if (selectedAsset!!.symbol == "TRX" || selectedAsset!!.networkName.contains("tron", ignoreCase = true)) {
+                                val tronRegex = Regex("^T[a-zA-Z0-9]{33}$")
+                                if (!tronRegex.matches(recipientAddress)) {
+                                    errorMsg = "Invalid Tron Address"
+                                    return@BrutalistButton
+                                }
+                            } else if (selectedAsset!!.symbol == "BTC") {
+                                // Simple check for BTC (starts with 1, 3, or bc1)
+                                if (!(recipientAddress.startsWith("1") || recipientAddress.startsWith("3") || recipientAddress.startsWith("bc1"))) {
+                                    errorMsg = "Invalid Bitcoin Address"
+                                    return@BrutalistButton
+                                }
                             }
                             
                             val amountVal = amount.toDoubleOrNull()

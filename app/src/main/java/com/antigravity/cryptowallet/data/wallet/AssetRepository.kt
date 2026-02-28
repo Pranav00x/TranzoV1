@@ -65,7 +65,7 @@ class AssetRepository @Inject constructor(
                     balance = lastBalance,
                     balanceUsd = token.lastBalanceUsd ?: "---",
                     iconUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png",
-                    networkName = token.chainId.uppercase(),
+                    networkName = initialNetworks.find { it.id == token.chainId }?.name ?: token.chainId.uppercase(),
                     rawBalance = rawVal,
                     price = 0.0
                 )
@@ -172,6 +172,16 @@ class AssetRepository @Inject constructor(
                      transactionRepository.checkPendingTransactions(net.rpcUrl)
                  } catch (e: Exception) { }
              }
+        }
+        
+        initialTokens.filter { it.contractAddress != null }.forEach { token ->
+            launch {
+                try {
+                    val net = networkRepository.getNetwork(token.chainId)
+                    val address = walletRepository.getAddress(net.id)
+                    transactionRepository.refreshTransactions(address, net, token.contractAddress)
+                } catch (e: Exception) { }
+            }
         }
 
         // 6. Wait for all balances and update final UI
