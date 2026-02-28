@@ -9,6 +9,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 data class Network(
+    val id: String,
+    val name: String,
+    val rpcUrl: String,
+    val initialRpc: String,
+    val chainId: Long,
+    val symbol: String,
+    val coingeckoId: String,
+    val explorerApiUrl: String,
+    val explorerApiKey: String = "",
     val decimals: Int = 18
 )
 
