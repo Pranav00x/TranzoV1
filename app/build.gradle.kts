@@ -1,9 +1,23 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
+fun getProp(key: String): String {
+    val prop = localProperties.getProperty(key)
+    return if (!prop.isNullOrEmpty()) "\"$prop\"" else "\"\""
 }
 
 android {
@@ -24,6 +38,13 @@ android {
         
         // Enable multi-dex for Web3j
         multiDexEnabled = true
+
+        buildConfigField("String", "ETHERSCAN_API_KEY", getProp("etherscan.api.key"))
+        buildConfigField("String", "ARBISCAN_API_KEY", getProp("arbiscan.api.key"))
+        buildConfigField("String", "BASESCAN_API_KEY", getProp("basescan.api.key"))
+        buildConfigField("String", "BSCSCAN_API_KEY", getProp("bscscan.api.key"))
+        buildConfigField("String", "POLYGONSCAN_API_KEY", getProp("polygonscan.api.key"))
+        buildConfigField("String", "OPTIMISMSCAN_API_KEY", getProp("optimismscan.api.key"))
     }
 
     signingConfigs {

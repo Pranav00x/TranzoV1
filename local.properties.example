@@ -1,0 +1,20 @@
+# This file must *NOT* be checked into Version Control Systems,
+# as it contains information specific to your local configuration.
+
+# Location of the SDK. This is only used by Gradle.
+# For customization when using a Version Control System, please read the
+# header note.
+# sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
+
+# ==========================================
+# Cryptocurrency Explorer API Keys
+# ==========================================
+# Add your API keys below to enable Transaction History fetching.
+# You can get these for free by signing up on the respective explorer websites.
+
+etherscan.api.key=YOUR_ETHERSCAN_KEY_HERE
+arbiscan.api.key=YOUR_ARBISCAN_KEY_HERE
+basescan.api.key=YOUR_BASESCAN_KEY_HERE
+bscscan.api.key=YOUR_BSCSCAN_KEY_HERE
+polygonscan.api.key=YOUR_POLYGONSCAN_KEY_HERE
+optimismscan.api.key=YOUR_OPTIMISMSCAN_KEY_HERE
