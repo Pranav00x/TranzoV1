@@ -110,7 +110,8 @@ class WalletViewModel @Inject constructor(
             chainId = chainId,
             symbol = symbol,
             coingeckoId = "", // Custom chains might not have coingecko integration out-of-the-box
-            explorerApiUrl = explorerUrl
+            explorerApiUrl = explorerUrl,
+            explorerApiKey = ""
         )
         networkRepository.addNetwork(newNetwork)
     }
