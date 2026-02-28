@@ -339,7 +339,7 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
                     color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
                 )
             }
-            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
         }
         
         item {
