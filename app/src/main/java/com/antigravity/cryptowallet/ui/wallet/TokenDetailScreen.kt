@@ -398,7 +398,7 @@ fun TokenDetailScreen(
             Column {
                 transactions.forEach { tx ->
                     DetailTransactionRow(tx = tx, symbol = symbol)
-                    HorizontalDivider(
+                    Divider(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                         modifier = Modifier.padding(vertical = 8.dp)
                     )

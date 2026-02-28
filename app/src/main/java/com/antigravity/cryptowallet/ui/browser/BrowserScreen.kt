@@ -297,7 +297,7 @@ fun BrowserTopBar(
                     }
                 }
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
+            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
         }
     }
 }
@@ -339,7 +339,7 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
                     color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
                 )
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
+            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
         }
         
         item {
@@ -583,7 +583,7 @@ fun NetworkSelector(
                             )
                         }
                         if (index < networks.size - 1) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
+                            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
                         }
                     }
                 }
