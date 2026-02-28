@@ -186,7 +186,7 @@ fun TransactionRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (isReceive) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                imageVector = if (isReceive) Icons.Filled.ArrowDownward else Icons.Filled.ArrowUpward,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(18.dp)

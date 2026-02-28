@@ -49,7 +49,7 @@ jobs:
         message: "Step 3/7: Gradle environment ready"
 
     - name: Build Debug APK
-      run: gradle clean assembleDebug --no-daemon --info --stacktrace --debug
+      run: gradle clean assembleDebug --no-daemon --info --stacktrace
 
     - name: Report – Build completed
       if: success()
