@@ -79,6 +79,19 @@ class TokenDetailViewModel @Inject constructor(
     var networkName by mutableStateOf("")
         private set
 
+    var tokenName by mutableStateOf("")
+        private set
+
+    init {
+        viewModelScope.launch {
+            walletRepository.activeCredentialsFlow.collect { creds ->
+                if (creds != null && currentAssetId.isNotEmpty()) {
+                    loadTokenData(currentAssetId)
+                }
+            }
+        }
+    }
+
     fun loadTokenData(assetId: String) {
         currentAssetId = assetId
         loadJob?.cancel()
@@ -99,6 +112,7 @@ class TokenDetailViewModel @Inject constructor(
                 val network = networkRepository.getNetwork(netId)
                 currentNetId = network.id
                 symbol = if (isNative) network.symbol else (tokenEntity?.symbol ?: "")
+                tokenName = if (isNative) network.name else (tokenEntity?.name ?: "")
                 currentSymbol = symbol
                 networkName = network.name
 
@@ -173,6 +187,19 @@ class TokenDetailViewModel @Inject constructor(
 
                 // 4. Graph (Wait for identity match)
                 try {
+                    if (cgId.isNotEmpty()) {
+                        launch {
+                            try {
+                                val info = coinRepository.getCoinInfo(cgId)
+                                description = info.description["en"] ?: "No description available."
+                            } catch (e: Exception) {
+                                description = "Token name is $tokenName on $networkName."
+                            }
+                        }
+                    } else {
+                        description = "$tokenName is a token on the $networkName network."
+                    }
+
                     var intervalResult = "hour"
                     val limit = when(selectedTimeframe.uppercase()) {
                         "1D" -> 24

@@ -6,11 +6,7 @@ import com.antigravity.cryptowallet.data.blockchain.NetworkRepository
 import com.antigravity.cryptowallet.data.wallet.TransactionRepository
 import com.antigravity.cryptowallet.data.wallet.WalletRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,6 +48,12 @@ class HistoryViewModel @Inject constructor(
     }
 
     init {
-        refresh()
+        viewModelScope.launch {
+            walletRepository.activeCredentialsFlow.collect { creds ->
+                if (creds != null) {
+                    refresh()
+                }
+            }
+        }
     }
 }

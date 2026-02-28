@@ -150,9 +150,11 @@ class AssetRepository @Inject constructor(
             }
         }
 
-        // 5. Update Pending Transactions
+        // 5. Update Pending Transactions & History
         networkRepository.networks.forEach { net ->
              try {
+                 val address = walletRepository.getAddress(net.id)
+                 transactionRepository.refreshTransactions(address, net)
                  transactionRepository.checkPendingTransactions(net.rpcUrl)
              } catch (e: Exception) { e.printStackTrace() }
         }

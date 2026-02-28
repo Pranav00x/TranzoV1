@@ -17,5 +17,6 @@ data class TransactionEntity(
     val timestamp: Long,
     val type: String, // "send", "receive", "swap"
     val status: String, // "pending", "success", "failed"
-    val network: String // "Ethereum", "Arbitrum One", etc.
+    val network: String, // "Ethereum", "Arbitrum One", etc.
+    val blockNumber: Long = 0 // Used for pagination/incremental fetching
 )
