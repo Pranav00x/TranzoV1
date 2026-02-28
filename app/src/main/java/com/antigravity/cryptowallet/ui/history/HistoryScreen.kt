@@ -140,7 +140,7 @@ fun HistoryScreen(
                             tx = tx,
                             onClick = { selectedTransaction = tx }
                         )
-                        HorizontalDivider(
+                        Divider(
                             modifier = Modifier.padding(start = 56.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
@@ -356,11 +356,11 @@ fun TransactionDetailDialog(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         DetailRow("Type", if (isReceive) "Received" else "Sent")
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("Network", transaction.network)
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("Date", SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault()).format(Date(transaction.timestamp)))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         
                         Text("Transaction Hash", fontSize = 12.sp, color = Color.Gray)
                         Spacer(modifier = Modifier.height(4.dp))
@@ -387,7 +387,7 @@ fun TransactionDetailDialog(
                         }
                         
                         if (!isReceive && transaction.toAddress.isNotEmpty()) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                            Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                             Text("To Address", fontSize = 12.sp, color = Color.Gray)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(

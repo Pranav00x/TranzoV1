@@ -242,7 +242,7 @@ fun TransactionResultScreen(
                             onCopy = { clipboardManager.setText(AnnotatedString(recipient)) }
                         )
 
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                        Divider(color = Color.White.copy(alpha = 0.05f))
                         
                         // Timestamp Item
                         val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
@@ -253,7 +253,7 @@ fun TransactionResultScreen(
                             valueColor = contentColor.copy(alpha = 0.9f)
                         )
 
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                        Divider(color = Color.White.copy(alpha = 0.05f))
 
                         // Network Item
                         DetailRow(
@@ -262,7 +262,7 @@ fun TransactionResultScreen(
                             valueColor = contentColor.copy(alpha = 0.9f)
                         )
 
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                        Divider(color = Color.White.copy(alpha = 0.05f))
 
                         // Hash Item
                         DetailRow(
