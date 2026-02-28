@@ -16,7 +16,8 @@ interface ExplorerApi {
         @Query("page") page: Int = 1,
         @Query("offset") offset: Int = 20,
         @Query("sort") sort: String = "desc",
-        @Query("apikey") apikey: String? = null
+        @Query("apikey") apikey: String? = null,
+        @Query("chainid") chainId: Long? = null
     ): ExplorerResponse
 }
 

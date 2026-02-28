@@ -22,11 +22,11 @@ class TransactionRepository @Inject constructor(
 
     suspend fun refreshTransactions(address: String, network: Network) = withContext(Dispatchers.IO) {
         try {
-            // Use dynamic explorer URL and API Key from Network
             val response = explorerApi.getTransactionList(
                 url = network.explorerApiUrl,
                 address = address,
-                apikey = network.explorerApiKey.takeIf { it.isNotBlank() }
+                apikey = network.explorerApiKey.takeIf { it.isNotBlank() },
+                chainId = if (network.id != "trx" && network.id != "btc") network.chainId else null
             )
             if (response.status == "1") {
                 val entities = response.result.map { tx ->
