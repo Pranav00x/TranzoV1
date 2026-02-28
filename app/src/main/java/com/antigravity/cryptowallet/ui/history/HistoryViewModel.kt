@@ -6,7 +6,10 @@ import com.antigravity.cryptowallet.data.blockchain.NetworkRepository
 import com.antigravity.cryptowallet.data.wallet.TransactionRepository
 import com.antigravity.cryptowallet.data.wallet.WalletRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,11 +18,20 @@ import javax.inject.Inject
 class HistoryViewModel @Inject constructor(
     private val repository: TransactionRepository,
     private val walletRepository: WalletRepository,
-    private val networkRepository: NetworkRepository
+    val networkRepository: NetworkRepository
 ) : ViewModel() {
 
-    val transactions = repository.transactions
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _selectedNetworkName = MutableStateFlow("All")
+    val selectedNetworkName = _selectedNetworkName.asStateFlow()
+
+    val transactions = combine(repository.transactions, _selectedNetworkName) { txs, filter ->
+        if (filter == "All") txs 
+        else txs.filter { it.network.equals(filter, ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun selectNetwork(name: String) {
+        _selectedNetworkName.value = name
+    }
 
     fun refresh() {
         viewModelScope.launch {

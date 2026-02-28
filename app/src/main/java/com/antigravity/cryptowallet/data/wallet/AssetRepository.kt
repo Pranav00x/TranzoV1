@@ -185,8 +185,14 @@ class AssetRepository @Inject constructor(
     private fun formatBalance(balance: BigDecimal, symbol: String): String {
         return if (balance.compareTo(BigDecimal.ZERO) == 0) {
             "0.00 $symbol"
-        } else if (balance < BigDecimal("0.0001")) {
-            String.format("%.6f %s", balance, symbol)
+        } else if (balance < BigDecimal("0.01")) {
+            // High precision for small balances (e.g. 0.00018)
+            val formatted = balance.stripTrailingZeros().toPlainString()
+            if (formatted.length > 10) {
+                String.format("%.8f %s", balance, symbol)
+            } else {
+                "$formatted $symbol"
+            }
         } else {
             String.format("%.4f %s", balance, symbol)
         }
