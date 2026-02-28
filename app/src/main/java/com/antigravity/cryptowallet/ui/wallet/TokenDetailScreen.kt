@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.runtime.*
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -391,48 +392,101 @@ fun TokenDetailScreen(
         if (transactions.isEmpty()) {
             Text("No transactions found", color = Color.Gray, fontSize = 12.sp)
         } else {
-            transactions.forEach { tx ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
-                        .clip(RoundedCornerShape(12.dp))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(0.6f)) {
-                        Text(if (tx.type == "send") "Sent" else "Received", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tx.hash.take(8) + "...", fontSize = 10.sp, color = Color.Gray)
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        modifier = Modifier.weight(0.4f)
-                    ) {
-                        val formattedAmount = try {
-                            val bd = java.math.BigDecimal(tx.value)
-                            val scaled = if (bd.abs() < java.math.BigDecimal("0.0001") && bd.abs() > java.math.BigDecimal.ZERO) {
-                                bd.setScale(8, java.math.BigDecimal.ROUND_HALF_UP)
-                            } else {
-                                bd.setScale(4, java.math.BigDecimal.ROUND_HALF_UP)
-                            }
-                            scaled.stripTrailingZeros().toPlainString()
-                        } catch (e: Exception) { tx.value }
-
-                        Text("${if(tx.type == "receive") "+" else "-"} $formattedAmount $symbol", 
-                            fontWeight = FontWeight.Bold, 
-                            color = if (tx.type == "receive") Color(0xFF00C853) else MaterialTheme.colorScheme.onBackground,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                        Text(tx.status, fontSize = 10.sp, color = if (tx.status == "success") Color(0xFF00C853) else Color.Red)
-                    }
+            Column {
+                transactions.forEach { tx ->
+                    DetailTransactionRow(tx = tx, symbol = symbol)
+                    Divider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun DetailTransactionRow(tx: com.antigravity.cryptowallet.data.db.TransactionEntity, symbol: String) {
+    val isReceive = tx.type == "receive"
+    val isSuccess = tx.status.lowercase() == "success"
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Icon
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    androidx.compose.foundation.shape.CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isReceive) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        // Info
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Transfer",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (isSuccess) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Success",
+                        tint = Color(0xFF00C853),
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
+            Text(
+                text = if (isReceive) "From: ${tx.fromAddress.take(6)}...${tx.fromAddress.takeLast(4)}" else "To: ${tx.toAddress.take(6)}...${tx.toAddress.takeLast(4)}",
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+        }
+        
+        // Amount
+        Column(horizontalAlignment = Alignment.End) {
+            val formattedAmount = try {
+                val bd = java.math.BigDecimal(tx.value)
+                val scaled = if (bd.abs() < java.math.BigDecimal("0.0001") && bd.abs() > java.math.BigDecimal.ZERO) {
+                    bd.setScale(8, java.math.BigDecimal.ROUND_HALF_UP)
+                } else {
+                    bd.setScale(4, java.math.BigDecimal.ROUND_HALF_UP)
+                }
+                scaled.stripTrailingZeros().toPlainString()
+            } catch (e: Exception) { tx.value }
+
+            Text(
+                text = "${if(isReceive) "+" else "-"} $formattedAmount $symbol",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = tx.status.replaceFirstChar { it.uppercase() },
+                fontSize = 10.sp,
+                color = if (isSuccess) Color(0xFF00C853) else Color.Red
+            )
+        }
     }
 }
