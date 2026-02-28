@@ -297,7 +297,7 @@ fun BrowserTopBar(
                     }
                 }
             }
-            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
         }
     }
 }
@@ -583,7 +583,7 @@ fun NetworkSelector(
                             )
                         }
                         if (index < networks.size - 1) {
-                            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
+                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
                         }
                     }
                 }
