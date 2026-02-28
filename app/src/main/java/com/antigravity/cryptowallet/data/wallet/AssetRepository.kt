@@ -5,6 +5,7 @@ import com.antigravity.cryptowallet.data.blockchain.NetworkRepository
 import com.antigravity.cryptowallet.data.db.TokenDao
 import com.antigravity.cryptowallet.data.db.TokenEntity
 import com.antigravity.cryptowallet.data.models.AssetUiModel
+import com.antigravity.cryptowallet.data.repository.CoinRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -23,7 +24,7 @@ class AssetRepository @Inject constructor(
     private val networkRepository: NetworkRepository,
     private val blockchainService: BlockchainService,
     private val tokenDao: TokenDao,
-    private val coinRepository: com.antigravity.cryptowallet.data.repository.CoinRepository,
+    private val coinRepository: CoinRepository,
     private val transactionRepository: TransactionRepository
 ) {
     private val _assets = kotlinx.coroutines.flow.MutableStateFlow<List<AssetUiModel>>(emptyList())
