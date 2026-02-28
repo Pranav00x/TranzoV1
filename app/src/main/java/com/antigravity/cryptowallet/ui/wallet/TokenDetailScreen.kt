@@ -58,6 +58,7 @@ fun TokenDetailScreen(
     val points = viewModel.graphPoints
     val transactions = viewModel.transactions
     val walletAddress = viewModel.walletAddress
+    val networkName = viewModel.networkName
     
     val isPositive = if (points.size > 1) points.last() >= points.first() else true
     val trendColor = if (isPositive) Color(0xFF00C853) else Color.Red
@@ -75,10 +76,11 @@ fun TokenDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Receive $symbol",
+                        "Receive $symbol on $networkName",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -145,7 +147,7 @@ fun TokenDetailScreen(
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
             }
-            BrutalistHeader(symbol)
+            BrutalistHeader("$symbol ($networkName)")
         }
 
         Spacer(modifier = Modifier.height(24.dp))

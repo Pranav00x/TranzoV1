@@ -72,6 +72,9 @@ class TokenDetailViewModel @Inject constructor(
     var symbol by mutableStateOf("")
         private set
 
+    var networkName by mutableStateOf("")
+        private set
+
     fun loadTokenData(assetId: String) {
         val isNative = assetId.startsWith("native-")
         
@@ -121,8 +124,16 @@ class TokenDetailViewModel @Inject constructor(
                     "trx" -> 6
                     else -> 18
                 }
-                val ethBalance = BigDecimal(rawBalance).divide(BigDecimal.TEN.pow(decimals), 4, java.math.RoundingMode.HALF_UP)
-                balance = String.format("%.4f %s", ethBalance, symbol)
+                val ethBalance = BigDecimal(rawBalance).divide(BigDecimal.TEN.pow(decimals))
+                balance = if (ethBalance.compareTo(BigDecimal.ZERO) == 0) {
+                    "0.00 $symbol"
+                } else if (ethBalance < BigDecimal("0.01")) {
+                    val formatted = ethBalance.stripTrailingZeros().toPlainString()
+                    if (formatted.length > 10) String.format("%.8f %s", ethBalance, symbol) else "$formatted $symbol"
+                } else {
+                    String.format("%.4f %s", ethBalance, symbol)
+                }
+                networkName = network.name
             } catch (e: Exception) {
                 e.printStackTrace()
                 balance = "0.0000"

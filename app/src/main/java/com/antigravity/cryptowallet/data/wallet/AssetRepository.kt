@@ -228,7 +228,12 @@ class AssetRepository @Inject constructor(
         val net = networkRepository.getNetwork(netId)
         
         val txHash = if (asset.id.startsWith("native-")) {
-            val amountWei = amountValue.multiply(BigDecimal.TEN.pow(18)).toBigInteger()
+            val decimals = when (net.id) {
+                "btc" -> 8
+                "trx" -> 6
+                else -> 18
+            }
+            val amountWei = amountValue.multiply(BigDecimal.TEN.pow(decimals)).toBigInteger()
             blockchainService.sendEth(net.rpcUrl, net.id, credentials, toAddress, amountWei)
         } else {
             // Token

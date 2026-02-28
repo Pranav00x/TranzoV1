@@ -73,7 +73,7 @@ fun TransferScreen(
             IconButton(onClick = { if (step > 0) step-- else onBack() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
             }
-            BrutalistHeader(if (step == 0) "Select Token" else "Send ${selectedAsset?.symbol}")
+            BrutalistHeader(if (step == 0) "Select Token" else "Send ${selectedAsset?.symbol} on ${selectedAsset?.networkName}")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -110,6 +110,7 @@ fun TransferScreen(
                         Column {
                             Text("Balance", fontSize = 12.sp, color = Color.Gray)
                             Text(asset.balance, fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground)
+                            Text("on ${asset.networkName}", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text("Price", fontSize = 12.sp, color = Color.Gray)
@@ -244,7 +245,7 @@ fun AssetSelector(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(asset.symbol, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
-                        Text(asset.name, fontSize = 10.sp, color = Color.Gray, lineHeight = 12.sp)
+                        Text("${asset.name} (${asset.networkName})", fontSize = 10.sp, color = Color.Gray, lineHeight = 12.sp)
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
