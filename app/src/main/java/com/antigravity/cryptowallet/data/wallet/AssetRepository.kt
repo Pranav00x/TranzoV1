@@ -161,7 +161,13 @@ class AssetRepository @Inject constructor(
             }
         }
 
-        // 5. Update Transactions (Non-blocking) - use coroutineScope to get a scope for launch
+        // 5. Wait for all balances and update final UI FIRST (before transactions)
+        val finalAssets = (nativeJobs + tokenJobs).awaitAll().filterNotNull()
+        if (finalAssets.isNotEmpty()) {
+            _assets.value = finalAssets
+        }
+
+        // 6. Update Transactions (Non-blocking, runs after balances are displayed)
         coroutineScope {
             initialNetworks.forEach { net ->
                 launch {
@@ -169,7 +175,9 @@ class AssetRepository @Inject constructor(
                         val address = walletRepository.getAddress(net.id)
                         transactionRepository.refreshTransactions(address, net)
                         transactionRepository.checkPendingTransactions(net.rpcUrl)
-                    } catch (e: Exception) { }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
             
@@ -179,15 +187,11 @@ class AssetRepository @Inject constructor(
                         val net = networkRepository.getNetwork(token.chainId)
                         val address = walletRepository.getAddress(net.id)
                         transactionRepository.refreshTransactions(address, net, token.contractAddress)
-                    } catch (e: Exception) { }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
-        }
-
-        // 6. Wait for all balances and update final UI
-        val finalAssets = (nativeJobs + tokenJobs).awaitAll().filterNotNull()
-        if (finalAssets.isNotEmpty()) {
-            _assets.value = finalAssets
         }
     }
 

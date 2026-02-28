@@ -355,17 +355,6 @@ fun TokenDetailScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Description
-        Text("About $symbol", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            description, 
-            fontSize = 12.sp, 
-            lineHeight = 18.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        
         // Actions
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -387,6 +376,17 @@ fun TokenDetailScreen(
         }
         
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Description
+        Text("About $symbol", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            description, 
+            fontSize = 12.sp, 
+            lineHeight = 18.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
 
         // History
         Text("Transaction History", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
