@@ -140,7 +140,7 @@ fun HistoryScreen(
                             tx = tx,
                             onClick = { selectedTransaction = tx }
                         )
-                        Divider(
+                        HorizontalDivider(
                             modifier = Modifier.padding(start = 56.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
@@ -206,7 +206,7 @@ fun TransactionRow(
                 if (isSuccess) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
-                        imageVector = androidx.compose.material.icons.filled.CheckCircle,
+                        imageVector = Icons.Filled.CheckCircle,
                         contentDescription = "Success",
                         tint = Color(0xFF00C853),
                         modifier = Modifier.size(14.dp)
@@ -356,11 +356,11 @@ fun TransactionDetailDialog(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         DetailRow("Type", if (isReceive) "Received" else "Sent")
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("Network", transaction.network)
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("Date", SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault()).format(Date(transaction.timestamp)))
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                         
                         Text("Transaction Hash", fontSize = 12.sp, color = Color.Gray)
                         Spacer(modifier = Modifier.height(4.dp))
@@ -387,7 +387,7 @@ fun TransactionDetailDialog(
                         }
                         
                         if (!isReceive && transaction.toAddress.isNotEmpty()) {
-                            Divider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 12.dp))
                             Text("To Address", fontSize = 12.sp, color = Color.Gray)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
