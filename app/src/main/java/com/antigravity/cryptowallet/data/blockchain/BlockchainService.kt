@@ -17,6 +17,18 @@ import javax.inject.Singleton
 @Singleton
 class BlockchainService @Inject constructor() {
 
+    private fun getChainId(networkId: String): Byte {
+        return when (networkId) {
+            "eth" -> 1.toByte()
+            "bsc" -> 56.toByte()
+            "matic" -> 137.toByte()
+            "base" -> 8453.toByte()
+            "arb" -> 42161.toByte()
+            "op" -> 10.toByte()
+            else -> 1.toByte() // fallback
+        }
+    }
+
     // Gas buffers are now dynamic based on transaction type
 
     // 1. Reusable OkHttpClient with increased timeouts
@@ -141,12 +153,13 @@ class BlockchainService @Inject constructor() {
                     throw Exception("Insufficient balance to cover transfer + gas fees. Required: $totalCost, Available: $balance")
                 }
 
-                // 5. Sign & Send
+                // 5. Sign & Send (EIP-155)
                 val rawTransaction = RawTransaction.createEtherTransaction(
                     nonce, gasPrice, gasLimit, toAddress, amountWei
                 )
 
-                val signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials)
+                val chainId = getChainId(networkId)
+                val signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
                 val hexValue = Numeric.toHexString(signedMessage)
 
                 val ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send()
@@ -219,12 +232,13 @@ class BlockchainService @Inject constructor() {
                     throw Exception("Insufficient ETH for gas fees. Required: $gasCost, Available: $ethBalance")
                 }
 
-                // 5. Sign & Send
+                // 5. Sign & Send (EIP-155)
                 val rawTransaction = RawTransaction.createTransaction(
                     nonce, gasPrice, gasLimit, tokenAddress, data
                 )
 
-                val signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials)
+                val chainId = getChainId(networkId)
+                val signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
                 val hexValue = Numeric.toHexString(signedMessage)
 
                 val ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send()
@@ -272,12 +286,13 @@ class BlockchainService @Inject constructor() {
                 
                 val gasLimit = BigInteger.valueOf(21000)
 
-                // 3. Sign & Send
+                // 3. Sign & Send (EIP-155)
                 val rawTransaction = RawTransaction.createEtherTransaction(
                     nonce, newGasPrice, gasLimit, credentials.address, BigInteger.ZERO
                 )
 
-                val signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials)
+                val chainId = getChainId(networkId)
+                val signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
                 val hexValue = Numeric.toHexString(signedMessage)
 
                 val ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send()
@@ -322,12 +337,13 @@ class BlockchainService @Inject constructor() {
                 val isTokenOrContract = data != null && data != "0x" && data.isNotEmpty()
                 val gasLimit = fetchGasLimit(web3j, estimateTx, networkId, isContract = isTokenOrContract)
 
-                // 3. Sign & Send
+                // 3. Sign & Send (EIP-155)
                 val rawTransaction = RawTransaction.createTransaction(
                     nonce, newGasPrice, gasLimit, toAddress, value, data
                 )
 
-                val signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials)
+                val chainId = getChainId(networkId)
+                val signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
                 val hexValue = Numeric.toHexString(signedMessage)
 
                 val ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send()
