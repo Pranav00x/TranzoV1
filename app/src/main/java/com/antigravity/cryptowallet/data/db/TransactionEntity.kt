@@ -3,9 +3,13 @@ package com.antigravity.cryptowallet.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "transactions")
+@Entity(
+    tableName = "transactions",
+    indices = [androidx.room.Index(value = ["hash"], unique = true)]
+)
 data class TransactionEntity(
-    @PrimaryKey val hash: String, // Transaction hash is the unique identifier
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val hash: String, // Transaction hash is a unique identifier (indexed)
     val fromAddress: String,
     val toAddress: String,
     val value: String, // Stored as string to handle BigIntegers/Decimals safely
