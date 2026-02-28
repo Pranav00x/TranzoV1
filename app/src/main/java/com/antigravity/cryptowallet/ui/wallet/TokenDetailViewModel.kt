@@ -191,7 +191,7 @@ class TokenDetailViewModel @Inject constructor(
                         launch {
                             try {
                                 val info = coinRepository.getCoinInfo(cgId)
-                                description = info.description["en"] ?: "No description available."
+                                description = if (info.description.en.isNotBlank()) info.description.en else "No description available."
                             } catch (e: Exception) {
                                 description = "Token name is $tokenName on $networkName."
                             }
