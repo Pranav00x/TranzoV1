@@ -191,7 +191,6 @@ class AssetRepository @Inject constructor(
             String.format("%.4f %s", balance, symbol)
         }
     }
-    }
 
     suspend fun addToken(address: String, symbol: String, decimals: Int, chainId: String, name: String) {
         tokenDao.insertToken(

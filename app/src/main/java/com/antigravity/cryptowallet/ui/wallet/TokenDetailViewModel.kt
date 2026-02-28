@@ -220,6 +220,7 @@ class TokenDetailViewModel @Inject constructor(
             
             kotlinx.coroutines.delay(600) // Rate limit bumper
 
+            try {
                 // 3. Fetch Chart, OHLC from our Backend (CryptoCompare)
                 var intervalResult = "hour"
                 val limit = when(selectedTimeframe.uppercase()) {
