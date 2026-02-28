@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import coil.compose.AsyncImage
+import com.antigravity.cryptowallet.data.blockchain.Network
 
 data class DApp(
     val name: String,

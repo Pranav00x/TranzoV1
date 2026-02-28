@@ -452,7 +452,7 @@ fun DetailTransactionRow(tx: com.antigravity.cryptowallet.data.db.TransactionEnt
                 if (isSuccess) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = Icons.Filled.CheckCircle,
                         contentDescription = "Success",
                         tint = Color(0xFF00C853),
                         modifier = Modifier.size(12.dp)
