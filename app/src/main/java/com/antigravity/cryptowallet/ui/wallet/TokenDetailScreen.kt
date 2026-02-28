@@ -223,18 +223,16 @@ fun TokenDetailScreen(
                 .pointerInput(ohlc) {
                     detectDragGestures(
                         onDragStart = { offset ->
+                            if (ohlc.isEmpty()) return@detectDragGestures
                             val index = (offset.x / size.width * ohlc.size).toInt().coerceIn(0, ohlc.size - 1)
-                            if (ohlc.isNotEmpty()) {
-                                selectedPrice = ohlc[index][4]
-                                selectedTime = ohlc[index][0].toLong()
-                            }
+                            selectedPrice = ohlc[index][4]
+                            selectedTime = ohlc[index][0].toLong()
                         },
                         onDrag = { change, _ ->
+                            if (ohlc.isEmpty()) return@detectDragGestures
                             val index = (change.position.x / size.width * ohlc.size).toInt().coerceIn(0, ohlc.size - 1)
-                            if (ohlc.isNotEmpty()) {
-                                selectedPrice = ohlc[index][1]
-                                selectedTime = ohlc[index][0].toLong()
-                            }
+                            selectedPrice = ohlc[index][1]
+                            selectedTime = ohlc[index][0].toLong()
                         },
                         onDragEnd = {
                             selectedPrice = null
