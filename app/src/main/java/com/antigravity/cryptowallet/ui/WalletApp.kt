@@ -76,7 +76,7 @@ fun WalletApp(
                 onNavigateToTransfer = { navController.navigate("transfer") },
                 onNavigateToAppInfo = { navController.navigate("app_info") },
                 onNavigateToAppearance = { navController.navigate("appearance") },
-                onNavigateToTokenDetail = { symbol -> navController.navigate("token_detail/$symbol") },
+                onNavigateToTokenDetail = { id -> navController.navigate("token_detail/$id") },
                 onNavigateToWalletConnect = { navController.navigate("wallet_connect") },
                 onNavigateToRevealPrivateKey = { navController.navigate("reveal_private_key_verify") },
                 onNavigateToWalletManager = { navController.navigate("wallet_manager") }
@@ -240,16 +240,16 @@ fun WalletApp(
         // ...
 
         composable(
-            route = "token_detail/{symbol}",
+            route = "token_detail/{id}",
             arguments = listOf(
-                androidx.navigation.navArgument("symbol") { type = androidx.navigation.NavType.StringType }
+                androidx.navigation.navArgument("id") { type = androidx.navigation.NavType.StringType }
             )
         ) { backStackEntry ->
-            val symbol = backStackEntry.arguments?.getString("symbol") ?: ""
+            val id = backStackEntry.arguments?.getString("id") ?: ""
             com.antigravity.cryptowallet.ui.wallet.TokenDetailScreen(
-                symbol = symbol,
+                assetId = id,
                 onBack = { navController.popBackStack() },
-                onNavigateToSend = { navController.navigate("transfer?symbol=$symbol") }
+                onNavigateToSend = { navController.navigate("transfer?symbol=$id") } // Assuming transfer still uses symbol/id, maybe update this later if transfer handles id. Wait, let's keep it symbol or ID. The receiver parses it.
             )
         }
     }

@@ -14,7 +14,7 @@ interface ExplorerApi {
         @Query("startblock") startblock: Int = 0,
         @Query("endblock") endblock: Int = 99999999,
         @Query("page") page: Int = 1,
-        @Query("offset") offset: Int = 100,
+        @Query("offset") offset: Int = 20,
         @Query("sort") sort: String = "desc",
         @Query("apikey") apikey: String? = null
     ): ExplorerResponse

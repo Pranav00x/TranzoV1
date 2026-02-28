@@ -39,7 +39,7 @@ import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun TokenDetailScreen(
-    symbol: String,
+    assetId: String,
     onBack: () -> Unit,
     onNavigateToSend: () -> Unit,
     viewModel: TokenDetailViewModel = androidx.hilt.navigation.compose.hiltViewModel()
@@ -47,10 +47,11 @@ fun TokenDetailScreen(
     var showReceiveDialog by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     
-    LaunchedEffect(symbol) {
-        viewModel.loadTokenData(symbol)
+    LaunchedEffect(assetId) {
+        viewModel.loadTokenData(assetId)
     }
 
+    val symbol = viewModel.symbol
     val price = viewModel.price
     val description = viewModel.description
     val contractAddress = viewModel.contractAddress

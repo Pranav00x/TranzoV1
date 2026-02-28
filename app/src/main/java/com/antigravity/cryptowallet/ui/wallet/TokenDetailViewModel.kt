@@ -69,33 +69,37 @@ class TokenDetailViewModel @Inject constructor(
         }
     }
 
-    fun loadTokenData(symbol: String) {
-        currentSymbol = symbol
-        
-        // 1. Observe transactions locally filtered by symbol
-        viewModelScope.launch {
-            transactionRepository.transactions.collect { allTxs ->
-                transactions = allTxs.filter { it.symbol.equals(symbol, ignoreCase = true) }
-            }
-        }
+    var symbol by mutableStateOf("")
+        private set
 
-        // 2. Fetch Balance and Refresh Transactions
+    fun loadTokenData(assetId: String) {
+        val isNative = assetId.startsWith("native-")
+        
+        // 1 & 2. Fetch Balance, Refresh Transactions, establish identity
         viewModelScope.launch {
             try {
-                val tokenEntity = tokenDao.getTokenBySymbol(symbol)
-                val netId = tokenEntity?.chainId ?: when(symbol.uppercase()) {
-                    "BNB" -> "bsc"
-                    "MATIC", "POL" -> "matic"
-                    "TRX" -> "trx"
-                    "BTC" -> "btc"
-                    "ARB" -> "arb"
-                    "OP" -> "op"
-                    "BASE" -> "base"
-                    "ETH" -> "eth"
-                    else -> "eth"
+                val tokenEntity = if (!isNative) {
+                    val tokenId = assetId.removePrefix("token-").toLongOrNull()
+                    tokenId?.let { tokenDao.getTokenById(it) }
+                } else null
+                
+                val netId = if (isNative) {
+                    assetId.removePrefix("native-")
+                } else {
+                    tokenEntity?.chainId ?: "eth"
                 }
+
                 val network = networkRepository.getNetwork(netId)
                 currentNetId = network.id
+                symbol = if (isNative) network.symbol else (tokenEntity?.symbol ?: "")
+                currentSymbol = symbol
+
+                // 1. Observe transactions locally filtered by exact network and symbol
+                launch {
+                    transactionRepository.transactions.collect { allTxs ->
+                        transactions = allTxs.filter { it.symbol.equals(symbol, ignoreCase = true) && it.network == network.name }
+                    }
+                }
                 
                 // Trigger Transaction Refresh
                 val targetAddress = walletRepository.getAddress(network.id)
@@ -117,17 +121,21 @@ class TokenDetailViewModel @Inject constructor(
                     "trx" -> 6
                     else -> 18
                 }
-                val ethBalance = BigDecimal(rawBalance).divide(BigDecimal.TEN.pow(decimals), 4, BigDecimal.ROUND_HALF_UP)
+                val ethBalance = BigDecimal(rawBalance).divide(BigDecimal.TEN.pow(decimals), 4, java.math.RoundingMode.HALF_UP)
                 balance = String.format("%.4f %s", ethBalance, symbol)
             } catch (e: Exception) {
                 e.printStackTrace()
-                balance = "0.0000 $symbol"
+                balance = "0.0000"
             }
         }
 
         // 3. Fetch Coin Info and Price with separate Error Handling
         viewModelScope.launch {
-            val tokenEntity = tokenDao.getTokenBySymbol(symbol)
+            val tokenEntity = if (!isNative) {
+                val tokenId = assetId.removePrefix("token-").toLongOrNull()
+                tokenId?.let { tokenDao.getTokenById(it) }
+            } else null
+            
             val id = tokenEntity?.coingeckoId ?: when(symbol.uppercase()) {
                 "ETH" -> "ethereum"
                 "BNB" -> "binancecoin"

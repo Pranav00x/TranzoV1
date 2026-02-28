@@ -64,7 +64,7 @@ class WalletViewModel @Inject constructor(
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
     val address: String
-        get() = walletRepository.getAddress(selectedNetworkId)
+        get() = walletRepository.getAddress(if (selectedNetworkId == "all") "eth" else selectedNetworkId)
     
     // Expose flow so UI re-renders when custom chains are added
     val networksFlow = networkRepository.networksFlow
@@ -72,11 +72,11 @@ class WalletViewModel @Inject constructor(
     val networks: List<com.antigravity.cryptowallet.data.blockchain.Network>
         get() = networkRepository.networks
         
-    var selectedNetworkId by mutableStateOf(networkRepository.networks.firstOrNull()?.id ?: "eth")
+    var selectedNetworkId by mutableStateOf("all")
         private set
 
-    val activeNetwork: com.antigravity.cryptowallet.data.blockchain.Network
-        get() = networkRepository.getNetwork(selectedNetworkId)
+    val activeNetwork: com.antigravity.cryptowallet.data.blockchain.Network?
+        get() = if (selectedNetworkId == "all") null else networkRepository.getNetwork(selectedNetworkId)
 
     // UI State
     var totalBalanceUsd by mutableStateOf("$0.00")
@@ -94,7 +94,9 @@ class WalletViewModel @Inject constructor(
 
     fun switchNetwork(networkId: String) {
         selectedNetworkId = networkId
-        networkRepository.setActiveNetwork(networkId)
+        if (networkId != "all") {
+            networkRepository.setActiveNetwork(networkId)
+        }
         updateDisplayedAssets()
         refresh()
     }
@@ -113,9 +115,9 @@ class WalletViewModel @Inject constructor(
         networkRepository.addNetwork(newNetwork)
     }
     
-    fun addToken(address: String, symbol: String, decimals: Int) {
+    fun addToken(address: String, symbol: String, decimals: Int, chainId: String) {
         viewModelScope.launch {
-            assetRepository.addToken(address, symbol, decimals, activeNetwork.id, symbol)
+            assetRepository.addToken(address, symbol, decimals, chainId, symbol)
         }
     }
 
@@ -154,7 +156,12 @@ class WalletViewModel @Inject constructor(
     }
     
     private fun updateDisplayedAssets() {
-        assets = allAssets.filter { it.networkName == activeNetwork.name }
+        if (selectedNetworkId == "all") {
+            assets = allAssets
+        } else {
+            val net = activeNetwork
+            assets = if (net != null) allAssets.filter { it.networkName == net.name } else allAssets
+        }
         
         // Calculate total from filtered assets
         val total = assets.sumOf { it.rawBalance * it.price }
@@ -203,6 +210,28 @@ fun WalletScreen(
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 300.dp)
                     ) {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        viewModel.switchNetwork("all")
+                                        showNetworkSelector = false
+                                    }
+                                    .background(if (viewModel.selectedNetworkId == "all") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                    .border(if (viewModel.selectedNetworkId == "all") 2.dp else 0.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("All Networks", color = if (viewModel.selectedNetworkId == "all") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                                if (viewModel.selectedNetworkId == "all") {
+                                    Text("ACTIVE", color = MaterialTheme.colorScheme.onPrimary, fontSize = 10.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        
                         items(networks.size) { index ->
                             val net = networks[index]
                             Row(
@@ -320,6 +349,8 @@ fun WalletScreen(
             var inputAddress by remember { mutableStateOf("") }
             var inputSymbol by remember { mutableStateOf("") }
             var inputDecimals by remember { mutableStateOf("18") }
+            var selectedChainId by remember { mutableStateOf(viewModel.selectedNetworkId.takeIf { it != "all" } ?: "eth") }
+            var expandedDropdown by remember { mutableStateOf(false) }
 
             Dialog(onDismissRequest = { showAddTokenDialog = false }) {
                 Column(
@@ -332,7 +363,30 @@ fun WalletScreen(
                 ) {
                     BrutalistHeader("Add Token")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("on ${viewModel.activeNetwork.name}", fontSize = 12.sp, color = Color.Gray)
+
+                    // Chain Selection Dropdown Button
+                    val activeNetName = networks.find { it.id == selectedChainId }?.name ?: "Select Network"
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = { expandedDropdown = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Network: $activeNetName", color = MaterialTheme.colorScheme.onBackground)
+                    }
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = expandedDropdown,
+                        onDismissRequest = { expandedDropdown = false }
+                    ) {
+                        networks.forEach { net ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(net.name) },
+                                onClick = {
+                                    selectedChainId = net.id
+                                    expandedDropdown = false
+                                }
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     androidx.compose.material3.OutlinedTextField(
@@ -352,7 +406,7 @@ fun WalletScreen(
 
                     BrutalistButton(text = "Add", onClick = { 
                         if (inputAddress.isNotEmpty() && inputSymbol.isNotEmpty()) {
-                            viewModel.addToken(inputAddress, inputSymbol.uppercase(), inputDecimals.toIntOrNull() ?: 18)
+                            viewModel.addToken(inputAddress, inputSymbol.uppercase(), inputDecimals.toIntOrNull() ?: 18, selectedChainId)
                             showAddTokenDialog = false
                         }
                     })
@@ -380,11 +434,20 @@ fun WalletScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "on ${viewModel.activeNetwork.name}", 
-                            fontSize = 12.sp, 
-                            color = Color.Gray
-                        )
+                        if (viewModel.activeNetwork != null) {
+                            Text(
+                                "on ${viewModel.activeNetwork?.name}", 
+                                fontSize = 12.sp, 
+                                color = Color.Gray
+                            )
+                        } else {
+                            Text(
+                                "Receive assets by scanning the QR code below.\nEnsure you send on supported networks.", 
+                                fontSize = 12.sp, 
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
 
                         if (viewModel.address.length > 10) { 
@@ -461,7 +524,7 @@ fun WalletScreen(
                     Box(modifier = Modifier.size(6.dp).background(Color(0xFF00C853), androidx.compose.foundation.shape.CircleShape))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        viewModel.activeNetwork.name.uppercase(),
+                        (viewModel.activeNetwork?.name ?: "ALL NETWORKS").uppercase(),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -557,7 +620,7 @@ fun WalletScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onNavigateToTokenDetail(asset.symbol) }
+                    .clickable { onNavigateToTokenDetail(asset.id) }
                             .padding(horizontal = 4.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically

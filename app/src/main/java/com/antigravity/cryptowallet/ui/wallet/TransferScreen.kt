@@ -34,7 +34,7 @@ import com.antigravity.cryptowallet.ui.theme.BrutalWhite
 fun TransferScreen(
     onBack: () -> Unit,
     onTransactionSuccess: (String, String, String, String, String) -> Unit,
-    initialSymbol: String? = null,
+    initialAssetId: String? = null,
     viewModel: WalletViewModel = hiltViewModel()
 ) {
     var step by remember { mutableStateOf(0) } // 0: Select Asset, 1: Enter Details
@@ -54,9 +54,9 @@ fun TransferScreen(
     }
     
     // Auto-select asset
-    LaunchedEffect(viewModel.assets, initialSymbol) {
-        if (initialSymbol != null && selectedAsset == null && viewModel.assets.isNotEmpty()) {
-            selectedAsset = viewModel.assets.find { it.symbol.equals(initialSymbol, ignoreCase = true) }
+    LaunchedEffect(viewModel.assets, initialAssetId) {
+        if (initialAssetId != null && selectedAsset == null && viewModel.assets.isNotEmpty()) {
+            selectedAsset = viewModel.assets.find { it.id == initialAssetId }
             if (selectedAsset != null) {
                 step = 1
             }
