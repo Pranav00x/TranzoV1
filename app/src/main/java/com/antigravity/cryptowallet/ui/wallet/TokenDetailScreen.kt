@@ -398,14 +398,34 @@ fun TokenDetailScreen(
                         .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
                         .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(0.6f)) {
                         Text(if (tx.type == "send") "Sent" else "Received", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                         Text(tx.hash.take(8) + "...", fontSize = 10.sp, color = Color.Gray)
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("${tx.value} $symbol", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.weight(0.4f)
+                    ) {
+                        val formattedAmount = try {
+                            val bd = java.math.BigDecimal(tx.value)
+                            val scaled = if (bd.abs() < java.math.BigDecimal("0.0001") && bd.abs() > java.math.BigDecimal.ZERO) {
+                                bd.setScale(8, java.math.BigDecimal.ROUND_HALF_UP)
+                            } else {
+                                bd.setScale(4, java.math.BigDecimal.ROUND_HALF_UP)
+                            }
+                            scaled.stripTrailingZeros().toPlainString()
+                        } catch (e: Exception) { tx.value }
+
+                        Text("${if(tx.type == "receive") "+" else "-"} $formattedAmount $symbol", 
+                            fontWeight = FontWeight.Bold, 
+                            color = if (tx.type == "receive") Color(0xFF00C853) else MaterialTheme.colorScheme.onBackground,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                         Text(tx.status, fontSize = 10.sp, color = if (tx.status == "success") Color(0xFF00C853) else Color.Red)
                     }
                 }

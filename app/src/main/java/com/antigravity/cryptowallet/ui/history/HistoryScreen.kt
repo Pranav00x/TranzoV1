@@ -206,23 +206,28 @@ fun TransactionItem(
             }
 
             // Amount + Status
-            Column(horizontalAlignment = Alignment.End) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.weight(0.4f)
+            ) {
                 Text(
                     text = "${if(isReceive) "+" else "-"} ${formatTransactionAmount(tx.value)} ${tx.symbol}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.onSurface
+                    fontSize = 14.sp,
+                    color = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(6.dp)
                             .background(statusColor, androidx.compose.foundation.shape.CircleShape)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = tx.status.replaceFirstChar { it.uppercase() },
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = statusColor
                     )
@@ -431,9 +436,14 @@ private fun DetailRow(label: String, value: String) {
 
 private fun formatTransactionAmount(value: String): String {
     return try {
-        // Parse and format to avoid scientific notation (e.g. 1E-10) and strip trailing zeros
         val bd = java.math.BigDecimal(value)
-        bd.stripTrailingZeros().toPlainString()
+        // If it's too small, limit decimals but keep enough for user to see
+        val scaled = if (bd.abs() < java.math.BigDecimal("0.0001") && bd.abs() > java.math.BigDecimal.ZERO) {
+            bd.setScale(8, java.math.BigDecimal.ROUND_HALF_UP)
+        } else {
+            bd.setScale(4, java.math.BigDecimal.ROUND_HALF_UP)
+        }
+        scaled.stripTrailingZeros().toPlainString()
     } catch (e: Exception) {
         value
     }
