@@ -104,7 +104,7 @@ class TokenDetailViewModel @Inject constructor(
                 // Trigger Transaction Refresh
                 val targetAddress = walletRepository.getAddress(network.id)
                 try {
-                    transactionRepository.refreshTransactions(targetAddress, network)
+                    transactionRepository.refreshTransactions(targetAddress, network, tokenEntity?.contractAddress)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

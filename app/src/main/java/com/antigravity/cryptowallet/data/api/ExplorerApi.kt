@@ -11,6 +11,7 @@ interface ExplorerApi {
         @Query("module") module: String = "account",
         @Query("action") action: String = "txlist",
         @Query("address") address: String,
+        @Query("contractaddress") contractaddress: String? = null,
         @Query("startblock") startblock: Int = 0,
         @Query("endblock") endblock: Int = 99999999,
         @Query("page") page: Int = 1,

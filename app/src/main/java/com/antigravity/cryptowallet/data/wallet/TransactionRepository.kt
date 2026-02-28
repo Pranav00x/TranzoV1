@@ -20,11 +20,13 @@ class TransactionRepository @Inject constructor(
 ) {
     val transactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
 
-    suspend fun refreshTransactions(address: String, network: Network) = withContext(Dispatchers.IO) {
+    suspend fun refreshTransactions(address: String, network: Network, contractAddress: String? = null) = withContext(Dispatchers.IO) {
         try {
             val response = explorerApi.getTransactionList(
                 url = network.explorerApiUrl,
+                action = if (contractAddress != null) "tokentx" else "txlist",
                 address = address,
+                contractaddress = contractAddress,
                 apikey = network.explorerApiKey.takeIf { it.isNotBlank() },
                 chainId = if (network.id != "trx" && network.id != "btc") network.chainId else null
             )
