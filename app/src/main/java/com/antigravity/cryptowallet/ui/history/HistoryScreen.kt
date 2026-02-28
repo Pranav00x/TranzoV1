@@ -1,5 +1,9 @@
 package com.antigravity.cryptowallet.ui.history
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
