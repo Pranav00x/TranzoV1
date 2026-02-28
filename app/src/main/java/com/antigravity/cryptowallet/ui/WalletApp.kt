@@ -170,7 +170,7 @@ fun WalletApp(
                 onTransactionSuccess = { amount, sym, recipient, txHash, networkName ->
                     navController.navigate("transaction_success/$amount/$sym/$recipient?txHash=$txHash&networkName=$networkName")
                 },
-                initialSymbol = symbol
+                initialAssetId = symbol
             )
         }
 
