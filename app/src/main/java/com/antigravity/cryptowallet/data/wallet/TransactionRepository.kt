@@ -32,7 +32,7 @@ class TransactionRepository @Inject constructor(
             )
             if (response.status == "1") {
                 val entities = response.result.map { tx ->
-                    val valueEth = BigDecimal(tx.value).divide(BigDecimal.TEN.pow(18)).toPlainString()
+                    val valueEth = BigDecimal(tx.value).divide(BigDecimal.TEN.pow(network.decimals)).toPlainString()
                     val type = if (tx.from.lowercase() == address.lowercase()) "send" else "receive"
                     TransactionEntity(
                         hash = tx.hash,

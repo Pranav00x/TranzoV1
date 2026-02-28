@@ -81,11 +81,7 @@ class AssetRepository @Inject constructor(
                     val address = walletRepository.getAddress(net.id)
                     val balance = blockchainService.getBalance(net.rpcUrl, address, net.id)
                     
-                    val decimals = when (net.id) {
-                        "btc" -> 8
-                        "trx" -> 6
-                        else -> 18
-                    }
+                    val decimals = net.decimals
                     val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(decimals))
                     
                     val price = priceMap[net.symbol] ?: 0.0
@@ -228,11 +224,7 @@ class AssetRepository @Inject constructor(
         val net = networkRepository.getNetwork(netId)
         
         val txHash = if (asset.id.startsWith("native-")) {
-            val decimals = when (net.id) {
-                "btc" -> 8
-                "trx" -> 6
-                else -> 18
-            }
+            val decimals = net.decimals
             val amountWei = amountValue.multiply(BigDecimal.TEN.pow(decimals)).toBigInteger()
             blockchainService.sendEth(net.rpcUrl, net.id, credentials, toAddress, amountWei)
         } else {

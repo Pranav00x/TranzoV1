@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.OpenInNew
@@ -104,7 +105,9 @@ fun HistoryScreen(
         
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (transactions.isEmpty()) {
+        val groupedTransactions by viewModel.groupedTransactions.collectAsStateWithLifecycle()
+
+        if (groupedTransactions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -122,12 +125,27 @@ fun HistoryScreen(
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(transactions) { tx ->
-                    TransactionItem(
-                        tx = tx,
-                        onClick = { selectedTransaction = tx }
-                    )
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                groupedTransactions.forEach { (date, txs) ->
+                    item {
+                        Text(
+                            text = date,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)
+                        )
+                    }
+                    items(txs) { tx ->
+                        TransactionRow(
+                            tx = tx,
+                            onClick = { selectedTransaction = tx }
+                        )
+                        Divider(
+                            modifier = Modifier.padding(start = 56.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }
@@ -143,94 +161,83 @@ fun HistoryScreen(
 }
 
 @Composable
-fun TransactionItem(
+fun TransactionRow(
     tx: TransactionEntity,
     onClick: () -> Unit
 ) {
     val isReceive = tx.type == "receive"
-    val statusColor = when(tx.status.lowercase()) {
-        "success" -> Color(0xFF00C853)
-        "failed" -> Color(0xFFD32F2F)
-        else -> Color(0xFFFFA000)
-    }
+    val isSuccess = tx.status.lowercase() == "success"
     
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clickable { onClick() }
+            .padding(vertical = 12.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        // Simple circular icon with arrow
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .size(40.dp)
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    androidx.compose.foundation.shape.CircleShape
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            // Icon + Type
+            Icon(
+                imageVector = if (isReceive) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        // Type + Address
+        Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            if (isReceive) Color(0xFF00C853).copy(alpha = 0.1f) 
-                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isReceive) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                        contentDescription = tx.type,
-                        tint = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Column(modifier = Modifier.weight(0.6f)) {
-                    Text(
-                        text = if (isReceive) "Received" else "Sent",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(tx.timestamp)),
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
-
-            // Amount + Status
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(0.4f)
-            ) {
                 Text(
-                    text = "${if(isReceive) "+" else "-"} ${formatTransactionAmount(tx.value)} ${tx.symbol}",
+                    text = "Transfer",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .background(statusColor, androidx.compose.foundation.shape.CircleShape)
-                    )
+                if (isSuccess) {
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = tx.status.replaceFirstChar { it.uppercase() },
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = statusColor
+                    Icon(
+                        imageVector = androidx.compose.material.icons.filled.CheckCircle,
+                        contentDescription = "Success",
+                        tint = Color(0xFF00C853),
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }
+            Text(
+                text = if (isReceive) 
+                    "From: ${tx.fromAddress.take(6)}...${tx.fromAddress.takeLast(4)}" 
+                else 
+                    "To: ${tx.toAddress.take(6)}...${tx.toAddress.takeLast(4)}",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+        }
+        
+        // Amount + Approx
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = "${if(isReceive) "+" else "-"} ${formatTransactionAmount(tx.value)} ${tx.symbol}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = if (isReceive) Color(0xFF00C853) else MaterialTheme.colorScheme.onSurface
+            )
+            // Approx USD placeholder (actual value should come from elsewhere if available, for now show approx)
+            Text(
+                text = "≈ $... ", // Placeholder as we don't store USD in history yet
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
         }
     }
 }

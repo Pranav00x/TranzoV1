@@ -24,10 +24,14 @@ class HistoryViewModel @Inject constructor(
     private val _selectedNetworkName = MutableStateFlow("All")
     val selectedNetworkName = _selectedNetworkName.asStateFlow()
 
-    val transactions = combine(repository.transactions, _selectedNetworkName) { txs, filter ->
-        if (filter == "All") txs 
+    val groupedTransactions = combine(repository.transactions, _selectedNetworkName) { txs, filter ->
+        val filtered = if (filter == "All") txs 
         else txs.filter { it.network.equals(filter, ignoreCase = true) }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        
+        filtered.groupBy { tx ->
+            SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(tx.timestamp))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     fun selectNetwork(name: String) {
         _selectedNetworkName.value = name
