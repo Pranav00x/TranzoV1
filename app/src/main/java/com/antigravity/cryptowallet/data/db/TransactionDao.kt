@@ -17,9 +17,15 @@ interface TransactionDao {
     @Query("UPDATE transactions SET status = :status WHERE hash = :hash")
     suspend fun updateStatus(hash: String, status: String)
 
+    @Query("UPDATE transactions SET blockNumber = :blockNumber, status = :status WHERE hash = :hash")
+    suspend fun updateBlockNumberAndStatus(hash: String, blockNumber: Long, status: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransactions(transactions: List<TransactionEntity>)
+
+    @Query("SELECT MAX(blockNumber) FROM transactions WHERE network = :network")
+    suspend fun getMaxBlockNumber(network: String): Long?
 }

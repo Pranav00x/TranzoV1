@@ -19,7 +19,7 @@ interface ExplorerApi {
         @Query("sort") sort: String = "desc",
         @Query("apikey") apikey: String? = null,
         @Query("chainid") chainId: Long? = null
-    ): ExplorerResponse
+    ): retrofit2.Response<com.google.gson.JsonElement>
 }
 
 data class ExplorerResponse(

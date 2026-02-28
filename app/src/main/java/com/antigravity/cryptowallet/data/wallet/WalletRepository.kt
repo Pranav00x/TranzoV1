@@ -22,8 +22,10 @@ class WalletRepository @Inject constructor(
     }
 
     // In-memory cache of credentials (cleared on lock)
-    var activeCredentials: Credentials? = null
-        private set
+    private val _activeCredentials = MutableStateFlow<Credentials?>(null)
+    val activeCredentialsFlow = _activeCredentials.asStateFlow()
+    val activeCredentials: Credentials? 
+        get() = _activeCredentials.value
 
     private val _wallets = MutableStateFlow<List<WalletInfo>>(emptyList())
     val wallets = _wallets.asStateFlow()
@@ -60,7 +62,7 @@ class WalletRepository @Inject constructor(
         secureStorage.saveMnemonic(mnemonic)
         
         // Load the new wallet
-        activeCredentials = credentials
+        _activeCredentials.value = credentials
         refreshWallets()
         
         mnemonic
@@ -83,7 +85,7 @@ class WalletRepository @Inject constructor(
             secureStorage.saveMnemonicForWallet(walletId, mnemonic)
             secureStorage.saveMnemonic(mnemonic)
             
-            activeCredentials = credentials
+            _activeCredentials.value = credentials
             refreshWallets()
             true
         } catch (e: Exception) {
@@ -106,7 +108,7 @@ class WalletRepository @Inject constructor(
             secureStorage.savePrivateKeyForWallet(walletId, cleanKey)
             secureStorage.savePrivateKey(cleanKey)
             
-            activeCredentials = credentials
+            _activeCredentials.value = credentials
             refreshWallets()
             true
         } catch (e: Exception) {
@@ -131,7 +133,7 @@ class WalletRepository @Inject constructor(
         if (newActive != null) {
             loadWalletCredentials(newActive)
         } else {
-            activeCredentials = null
+            _activeCredentials.value = null
         }
     }
 
@@ -141,7 +143,7 @@ class WalletRepository @Inject constructor(
     }
 
     private suspend fun loadWalletCredentials(wallet: WalletInfo) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        activeCredentials = when (wallet.type) {
+        val creds = when (wallet.type) {
             WalletType.MNEMONIC -> {
                 val mnemonic = secureStorage.getMnemonicForWallet(wallet.id)
                 if (mnemonic != null) {
@@ -157,6 +159,7 @@ class WalletRepository @Inject constructor(
                 if (key != null) Credentials.create(key) else null
             }
         }
+        _activeCredentials.value = creds
     }
 
     suspend fun loadWallet(mnemonic: String? = null, privateKey: String? = null) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -173,7 +176,7 @@ class WalletRepository @Inject constructor(
             val seedMnemonic = mnemonic ?: secureStorage.getMnemonic()
             val storedPrivateKey = privateKey ?: secureStorage.getPrivateKey()
 
-            activeCredentials = when {
+            _activeCredentials.value = when {
                 seedMnemonic != null -> {
                     val seed = MnemonicUtils.generateSeed(seedMnemonic, null)
                     val masterKeyPair = Bip32ECKeyPair.generateKeyPair(seed)
@@ -190,7 +193,7 @@ class WalletRepository @Inject constructor(
             refreshWallets()
         } catch (e: Exception) {
             e.printStackTrace()
-            activeCredentials = null
+            _activeCredentials.value = null
         }
     }
 

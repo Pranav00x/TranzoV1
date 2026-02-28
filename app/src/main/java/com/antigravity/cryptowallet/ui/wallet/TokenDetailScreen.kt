@@ -150,7 +150,8 @@ fun TokenDetailScreen(
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
             }
-            BrutalistHeader("$symbol ($networkName)")
+            val tokenName = viewModel.tokenName
+            BrutalistHeader("$tokenName ($symbol)")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
