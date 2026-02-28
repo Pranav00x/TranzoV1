@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import javax.inject.Inject
@@ -38,60 +39,78 @@ class AssetRepository @Inject constructor(
         val initialTokens = tokenDao.getAllTokens().first()
         val initialNetworks = networkRepository.networks
         
-        val dbState = initialNetworks.map { net ->
-            val token = initialTokens.find { it.symbol == net.symbol && it.chainId == net.id && !it.isCustom }
-            AssetUiModel(
-                id = "native-${net.id}",
-                symbol = net.symbol,
-                name = net.name,
-                balance = token?.lastBalance ?: "0.00 ${net.symbol}",
-                balanceUsd = token?.lastBalanceUsd ?: "---",
-                iconUrl = getNativeIcon(net.id, net.symbol),
-                networkName = net.name,
-                rawBalance = 0.0,
-                price = 0.0
-            )
-        } + initialTokens.filter { it.isCustom || (it.contractAddress != null) }.map { token ->
-            AssetUiModel(
-                id = "token-${token.id}",
-                symbol = token.symbol,
-                name = token.name,
-                balance = token.lastBalance ?: "0.00 ${token.symbol}",
-                balanceUsd = token.lastBalanceUsd ?: "---",
-                iconUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png",
-                networkName = token.chainId.uppercase(),
-                rawBalance = 0.0,
-                price = 0.0
-            )
+        fun buildUiModels(tokens: List<TokenEntity>): List<AssetUiModel> {
+            return initialNetworks.map { net ->
+                val token = tokens.find { it.symbol == net.symbol && it.chainId == net.id && !it.isCustom }
+                val lastBalance = token?.lastBalance ?: "0.00 ${net.symbol}"
+                val rawVal = try { lastBalance.split(" ")[0].toDouble() } catch(e: Exception) { 0.0 }
+                AssetUiModel(
+                    id = "native-${net.id}",
+                    symbol = net.symbol,
+                    name = net.name,
+                    balance = lastBalance,
+                    balanceUsd = token?.lastBalanceUsd ?: "---",
+                    iconUrl = getNativeIcon(net.id, net.symbol),
+                    networkName = net.name,
+                    rawBalance = rawVal,
+                    price = 0.0
+                )
+            } + tokens.filter { it.isCustom || (it.contractAddress != null) }.map { token ->
+                val lastBalance = token.lastBalance ?: "0.00 ${token.symbol}"
+                val rawVal = try { lastBalance.split(" ")[0].toDouble() } catch(e: Exception) { 0.0 }
+                AssetUiModel(
+                    id = "token-${token.id}",
+                    symbol = token.symbol,
+                    name = token.name,
+                    balance = lastBalance,
+                    balanceUsd = token.lastBalanceUsd ?: "---",
+                    iconUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png",
+                    networkName = token.chainId.uppercase(),
+                    rawBalance = rawVal,
+                    price = 0.0
+                )
+            }
         }
 
-        if (_assets.value.isEmpty() || _assets.value.size != dbState.size) {
-            _assets.value = dbState
-        }
+        val currentDbState = buildUiModels(initialTokens)
+        _assets.value = currentDbState
 
         // 2. Fetch Aggregated Prices from our Backend
-        val allTokens = tokenDao.getAllTokens().first()
-        val currentSymbols = (networkRepository.networks.map { it.symbol } + allTokens.map { it.symbol }).distinct()
+        val currentSymbols = (initialNetworks.map { it.symbol } + initialTokens.map { it.symbol }).distinct()
         val priceMap = coinRepository.getPrices(currentSymbols)
 
-        // 3. Fetch Native Balances in Parallel
-        val nativeAssetsDeferred = networkRepository.networks.map { net ->
+        // 3. Update UI immediately with new prices + old balances
+        if (priceMap.isNotEmpty()) {
+            val priceUpdatedState = currentDbState.map { model ->
+                val price = priceMap[model.symbol] ?: 0.0
+                if (price > 0) {
+                    val balanceUsd = BigDecimal(model.rawBalance).multiply(BigDecimal(price))
+                    model.copy(
+                        balanceUsd = String.format("$%.2f", balanceUsd.toDouble()),
+                        price = price
+                    )
+                } else model
+            }
+            _assets.value = priceUpdatedState
+        }
+
+        // 4. Fetch Balances and Update UI Incrementally
+        val results = mutableListOf<AssetUiModel>()
+        
+        val nativeJobs = initialNetworks.map { net ->
             async {
                 try {
                     val address = walletRepository.getAddress(net.id)
                     val balance = blockchainService.getBalance(net.rpcUrl, address, net.id)
                     
-                    val decimals = net.decimals
-                    val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(decimals))
-                    
+                    val ethBalance = BigDecimal(balance).divide(BigDecimal.TEN.pow(net.decimals))
                     val price = priceMap[net.symbol] ?: 0.0
                     val balanceUsd = ethBalance.multiply(BigDecimal(price))
-                    val imageUrl = getNativeIcon(net.id, net.symbol)
-
+                    
                     val balanceStr = formatBalance(ethBalance, net.symbol)
-                    val balanceUsdStr = String.format("$%.2f", balanceUsd)
+                    val balanceUsdStr = String.format("$%.2f", balanceUsd.toDouble())
 
-                    // Cache to DB (native tokens are also in tokens table)
+                    // Cache to DB
                     val existingToken = tokenDao.getTokenBySymbol(net.symbol)
                     if (existingToken != null && existingToken.chainId == net.id) {
                          tokenDao.updateBalances(existingToken.id, balanceStr, balanceUsdStr)
@@ -103,19 +122,16 @@ class AssetRepository @Inject constructor(
                         name = net.name,
                         balance = balanceStr,
                         balanceUsd = balanceUsdStr,
-                        iconUrl = imageUrl,
+                        iconUrl = getNativeIcon(net.id, net.symbol),
                         networkName = net.name,
                         rawBalance = ethBalance.toDouble(),
                         price = price
                     )
-                } catch (e: Exception) {
-                    null
-                }
+                } catch (e: Exception) { null }
             }
         }
 
-        // 4. Fetch Token Balances in Parallel
-        val tokenAssetsDeferred = allTokens.filter { it.contractAddress != null }.map { token ->
+        val tokenJobs = initialTokens.filter { it.contractAddress != null }.map { token ->
             async {
                 try {
                     val net = networkRepository.getNetwork(token.chainId)
@@ -125,10 +141,9 @@ class AssetRepository @Inject constructor(
                     
                     val price = priceMap[token.symbol] ?: 0.0
                     val balanceUsd = tokenBalance.multiply(BigDecimal(price))
-                    val imageUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png"
-
+                    
                     val balanceStr = formatBalance(tokenBalance, token.symbol)
-                    val balanceUsdStr = String.format("$%.2f", balanceUsd)
+                    val balanceUsdStr = String.format("$%.2f", balanceUsd.toDouble())
 
                     // Cache to DB
                     tokenDao.updateBalances(token.id, balanceStr, balanceUsdStr)
@@ -139,31 +154,31 @@ class AssetRepository @Inject constructor(
                         name = token.name,
                         balance = balanceStr,
                         balanceUsd = balanceUsdStr,
-                        iconUrl = imageUrl,
+                        iconUrl = "https://static.coinpaprika.com/coin/${token.symbol.lowercase()}-${token.name.lowercase().replace(" ","-")}/logo.png",
                         networkName = net.name,
                         rawBalance = tokenBalance.toDouble(),
                         price = price
                     )
-                } catch (e: Exception) {
-                    null
-                }
+                } catch (e: Exception) { null }
             }
         }
 
-        // 5. Update Pending Transactions & History
-        networkRepository.networks.forEach { net ->
-             try {
-                 val address = walletRepository.getAddress(net.id)
-                 transactionRepository.refreshTransactions(address, net)
-                 transactionRepository.checkPendingTransactions(net.rpcUrl)
-             } catch (e: Exception) { e.printStackTrace() }
+        // 5. Update Transactions (Non-blocking)
+        initialNetworks.forEach { net ->
+             launch {
+                 try {
+                     val address = walletRepository.getAddress(net.id)
+                     transactionRepository.refreshTransactions(address, net)
+                     transactionRepository.checkPendingTransactions(net.rpcUrl)
+                 } catch (e: Exception) { }
+             }
         }
 
-        // Wait for all
-        val nativeAssets = nativeAssetsDeferred.awaitAll().filterNotNull()
-        val tokenAssets = tokenAssetsDeferred.awaitAll().filterNotNull()
-        
-        _assets.value = nativeAssets + tokenAssets
+        // 6. Wait for all balances and update final UI
+        val finalAssets = (nativeJobs + tokenJobs).awaitAll().filterNotNull()
+        if (finalAssets.isNotEmpty()) {
+            _assets.value = finalAssets
+        }
     }
 
     private fun getNativeIcon(id: String, symbol: String): String {
