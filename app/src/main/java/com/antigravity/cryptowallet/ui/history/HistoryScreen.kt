@@ -46,7 +46,6 @@ import java.util.*
 fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
-    val transactions by viewModel.transactions.collectAsStateWithLifecycle()
     var selectedTransaction by remember { mutableStateOf<TransactionEntity?>(null) }
 
     Column(

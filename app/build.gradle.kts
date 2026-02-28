@@ -128,6 +128,7 @@ dependencies {
 
     // Web3j & Crypto (using lightweight core if possible, but standard is robust)
     implementation("org.web3j:core:4.10.3")
+    implementation("org.bitcoinj:bitcoinj-core:0.16.2")
     
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
