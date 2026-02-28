@@ -17,15 +17,15 @@ import javax.inject.Singleton
 @Singleton
 class BlockchainService @Inject constructor() {
 
-    private fun getChainId(networkId: String): Byte {
+    private fun getChainId(networkId: String): Long {
         return when (networkId) {
-            "eth" -> 1.toByte()
-            "bsc" -> 56.toByte()
-            "matic" -> 137.toByte()
-            "base" -> 8453.toByte()
-            "arb" -> 42161.toByte()
-            "op" -> 10.toByte()
-            else -> 1.toByte() // fallback
+            "eth" -> 1L
+            "bsc" -> 56L
+            "matic" -> 137L
+            "base" -> 8453L
+            "arb" -> 42161L
+            "op" -> 10L
+            else -> 1L // fallback
         }
     }
 
