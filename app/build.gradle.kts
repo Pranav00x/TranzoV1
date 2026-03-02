@@ -45,6 +45,7 @@ android {
         buildConfigField("String", "BSCSCAN_API_KEY", getProp("bscscan.api.key"))
         buildConfigField("String", "POLYGONSCAN_API_KEY", getProp("polygonscan.api.key"))
         buildConfigField("String", "OPTIMISMSCAN_API_KEY", getProp("optimismscan.api.key"))
+        buildConfigField("String", "WALLETCONNECT_PROJECT_ID", getProp("walletconnect.project.id"))
     }
 
     signingConfigs {
