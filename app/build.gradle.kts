@@ -143,8 +143,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // WalletConnect (Reown)
-    implementation("com.walletconnect:android-core:2.1.2")
-    implementation("com.walletconnect:web3wallet:1.1.2")
+    implementation(platform("com.walletconnect:android-bom:1.35.2"))
+    implementation("com.walletconnect:android-core")
+    implementation("com.walletconnect:web3wallet")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.70")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
