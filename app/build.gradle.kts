@@ -141,6 +141,12 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // WalletConnect (Reown)
+    implementation("com.walletconnect:android-core:2.1.2")
+    implementation("com.walletconnect:web3wallet:1.1.2")
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.70")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
     // WorkManager (Background sync)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
@@ -159,5 +165,5 @@ dependencies {
 }
 
 configurations.all {
-    exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
 }
