@@ -32,6 +32,8 @@ class Web3Bridge(
                 window.ethereum = {
                     isAntigravity: true,
                     isMetaMask: true,
+                    isTrust: true,
+                    isTrustWallet: true,
                     networkVersion: '${chainId}',
                     chainId: chainId,
                     selectedAddress: address,
@@ -114,6 +116,7 @@ class Web3Bridge(
                     }
                 };
                 
+                window.trustwallet = window.ethereum;
                 window.callbacks = {};
                 
                 window.onRpcResponse = function(id, result, error) {

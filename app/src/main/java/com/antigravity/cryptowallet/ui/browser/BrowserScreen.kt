@@ -210,9 +210,8 @@ fun BrowserTopBar(
             ) {
                 if (!isHome) {
                     Surface(
-                        shape = RoundedCornerShape(0.dp),
-                        color = MaterialTheme.colorScheme.background,
-                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f),
                         modifier = Modifier.clickable { onHome() }.size(48.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -224,24 +223,22 @@ fun BrowserTopBar(
 
                 Surface(
                     modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(0.dp),
-                    color = MaterialTheme.colorScheme.background,
-                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground)
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("HTTP://", style = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp), color = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         BasicTextField(
                             value = currentUrl,
                             onValueChange = onValueChange,
                             singleLine = true,
                             textStyle = TextStyle(
-                                fontFamily = FontFamily.Monospace,
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Black,
+                                fontWeight = FontWeight.Normal,
                                 color = MaterialTheme.colorScheme.onBackground
                             ),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
@@ -250,9 +247,9 @@ fun BrowserTopBar(
                             decorationBox = { innerTextField ->
                                 if (currentUrl.isEmpty()) {
                                     Text(
-                                        "SEARCH_OR_ENTER_URL", 
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                                        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp, fontWeight = FontWeight.Black)
+                                        "Search or enter url...", 
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal)
                                     )
                                 }
                                 innerTextField()
@@ -264,7 +261,7 @@ fun BrowserTopBar(
                                  onClick = { onValueChange("") },
                                  modifier = Modifier.size(24.dp)
                              ) {
-                                 Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground)
+                                 Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
                              }
                         }
                     }
@@ -273,31 +270,28 @@ fun BrowserTopBar(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Surface(
-                    shape = RoundedCornerShape(0.dp),
-                    color = MaterialTheme.colorScheme.background,
-                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f),
                     modifier = Modifier
                         .clickable { onNetworkClick() }
                         .height(48.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(modifier = Modifier.size(10.dp).background(Color(0xFF00FF00)))
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF4CAF50)))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            activeNetworkName.take(3).uppercase(), 
+                            activeNetworkName, 
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )
                     }
                 }
             }
-            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
         }
     }
 }
@@ -314,45 +308,37 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.onBackground)
                     .padding(24.dp)
             ) {
                 Text(
-                    "DAPP BROWSER",
-                    style = MaterialTheme.typography.displayMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-2).sp
-                    ),
-                    color = MaterialTheme.colorScheme.background
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "ACCESS THE UNRESTRICTED DECENTRALIZED WEB. NO TRACKING. PURE EXECUTION.",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
+                    "Discover",
+                    style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 16.sp,
-                        letterSpacing = 1.sp
+                        letterSpacing = (-0.5).sp
                     ),
-                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Explore the decentralized web securely.",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
             }
-            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 4.dp)
         }
         
         item {
             Text(
-                "// FEATURED_PROTOCOLS",
+                "Featured dApps",
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                 ),
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 24.dp, top = 32.dp, bottom = 24.dp)
+                modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 16.dp)
             )
         }
         
@@ -364,10 +350,10 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
                 val idx1 = rowIndex * 2
                 val idx2 = idx1 + 1
                 
-                DAppBrutalistCard(dapp = dapps[idx1], onClick = { onDappClick(dapps[idx1]) }, modifier = Modifier.weight(1f))
+                DAppCard(dapp = dapps[idx1], onClick = { onDappClick(dapps[idx1]) }, modifier = Modifier.weight(1f))
                 
                 if (idx2 < dapps.size) {
-                    DAppBrutalistCard(dapp = dapps[idx2], onClick = { onDappClick(dapps[idx2]) }, modifier = Modifier.weight(1f))
+                    DAppCard(dapp = dapps[idx2], onClick = { onDappClick(dapps[idx2]) }, modifier = Modifier.weight(1f))
                 } else {
                     Spacer(modifier = Modifier.weight(1f)) 
                 }
@@ -378,11 +364,10 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
 }
 
 @Composable
-fun DAppBrutalistCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(0.dp),
-        color = MaterialTheme.colorScheme.background,
-        border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onBackground),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -392,66 +377,39 @@ fun DAppBrutalistCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modi
         ) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
-                    .background(MaterialTheme.colorScheme.onBackground),
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
                     model = dapp.iconUrl,
                     contentDescription = dapp.name,
-                    modifier = Modifier.size(46.dp).clip(RoundedCornerShape(0.dp)).background(MaterialTheme.colorScheme.background)
+                    modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                dapp.name.uppercase(),
+                dapp.name,
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.5).sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                dapp.description.uppercase(),
+                dapp.description,
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 14.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    lineHeight = 16.sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 maxLines = 2
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "LAUNCH",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    "->",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
         }
     }
 }
@@ -538,19 +496,16 @@ fun NetworkSelector(
 ) {
      androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            shape = RoundedCornerShape(0.dp),
-            border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.onBackground),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    "// SELECT_NETWORK",
+                    "Select Network",
                     style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
+                        fontWeight = FontWeight.Bold,
                     ),
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 24.dp)
@@ -561,39 +516,39 @@ fun NetworkSelector(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .clickable { onSelect(net) }
-                                .padding(vertical = 16.dp),
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(0.dp),
-                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else Color.Transparent,
-                                border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onBackground),
-                                modifier = Modifier.size(24.dp)
-                            ) {}
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(if (net.id == activeNetworkId) Color(0xFF4CAF50) else Color.Transparent)
+                                    .border(1.dp, if (net.id == activeNetworkId) Color.Transparent else MaterialTheme.colorScheme.onSurface.copy(alpha=0.2f), CircleShape)
+                            )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
-                                net.name.uppercase(), 
+                                net.name, 
                                 style = TextStyle(
-                                    fontFamily = FontFamily.Monospace,
                                     fontSize = 16.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = if (net.id == activeNetworkId) FontWeight.Bold else FontWeight.Medium
                                 ),
-                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f)
+                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.7f)
                             )
-                        }
-                        if (index < networks.size - 1) {
-                            Divider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
-                BrutalistButton(
-                    text = "CANCEL",
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    inverted = true
-                )
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
+                }
             }
         }
     }
@@ -715,9 +670,9 @@ private suspend fun handleWeb3RequestAsync(
                 val signatureData = org.web3j.crypto.Sign.signPrefixedMessage(data, credentials.ecKeyPair)
                 
                 // Guarantee strictly exactly 64 chars of padding for r and s elements, and 2 for v
-                val r = signatureData.r.joinToString("") { "%02x".format(it) }
-                val s = signatureData.s.joinToString("") { "%02x".format(it) }
-                val v = signatureData.v.joinToString("") { "%02x".format(it) }
+                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
+                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
+                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
                 val signature = "0x$r$s$v"
                 
                 withContext(Dispatchers.Main) {
@@ -736,13 +691,22 @@ private suspend fun handleWeb3RequestAsync(
                 val paramsArray = org.json.JSONArray(request.params)
                 val typedData = if (paramsArray.length() > 1) paramsArray.getString(1) else paramsArray.getString(0)
                 
-                // Hash the typed data and sign
-                val dataHash = org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8))
-                val signatureData = org.web3j.crypto.Sign.signMessage(dataHash, credentials.ecKeyPair, false)
+                // Note: ideally we should use StructuredDataEncoder for EIP-712 hashing.
+                // However, standard sha3 over string fallback is kept for now unless encoder is available.
+                var signatureData: org.web3j.crypto.Sign.SignatureData? = null
+                try {
+                    val encoder = org.web3j.crypto.StructuredDataEncoder(typedData)
+                    val hashInfo = encoder.hashStructuredData()
+                    signatureData = org.web3j.crypto.Sign.signMessage(hashInfo, credentials.ecKeyPair, false)
+                } catch (ex: Exception) {
+                    val dataHash = org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8))
+                    signatureData = org.web3j.crypto.Sign.signMessage(dataHash, credentials.ecKeyPair, false)
+                }
+                requireNotNull(signatureData) { "Signature data null" }
                 
-                val r = signatureData.r.joinToString("") { "%02x".format(it) }
-                val s = signatureData.s.joinToString("") { "%02x".format(it) }
-                val v = signatureData.v.joinToString("") { "%02x".format(it) }
+                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
+                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
+                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
                 val signature = "0x$r$s$v"
                 
                 withContext(Dispatchers.Main) {
