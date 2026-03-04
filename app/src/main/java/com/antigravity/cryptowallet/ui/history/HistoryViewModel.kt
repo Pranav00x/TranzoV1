@@ -7,6 +7,7 @@ import com.antigravity.cryptowallet.data.wallet.TransactionRepository
 import com.antigravity.cryptowallet.data.wallet.WalletRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,6 +55,16 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             walletRepository.activeCredentialsFlow.collect { creds ->
                 if (creds != null) {
+                    refresh()
+                }
+            }
+        }
+        
+        // Continuous background polling like in MetaMask / Trust Wallet
+        viewModelScope.launch {
+            while (true) {
+                delay(15000) // Poll every 15 seconds
+                if (walletRepository.isWalletCreated()) {
                     refresh()
                 }
             }

@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.Alignment
@@ -65,6 +67,8 @@ fun TokenDetailScreen(
     
     val isPositive = if (points.size > 1) points.last() >= points.first() else true
     val trendColor = if (isPositive) Color(0xFF00C853) else Color.Red
+    
+    var showFullDescription by remember { mutableStateOf(false) }
 
     // Receive Dialog
     if (showReceiveDialog) {
@@ -358,12 +362,27 @@ fun TokenDetailScreen(
         // Description
         Text("About $symbol", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            description, 
-            fontSize = 12.sp, 
-            lineHeight = 18.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-        )
+        
+        Column(modifier = Modifier.fillMaxWidth().clickable { showFullDescription = !showFullDescription }) {
+            Text(
+                text = description, 
+                fontSize = 12.sp, 
+                lineHeight = 18.sp,
+                maxLines = if (showFullDescription) Int.MAX_VALUE else 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+            )
+            if (description.length > 150) { // arbitrary length to show the button
+                Text(
+                    text = if (showFullDescription) "Show less" else "Read more",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 4.dp).align(Alignment.End)
+                )
+            }
+        }
+        
         Spacer(modifier = Modifier.height(24.dp))
         
         // Actions
