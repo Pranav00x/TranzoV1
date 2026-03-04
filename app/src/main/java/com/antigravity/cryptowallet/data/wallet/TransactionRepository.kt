@@ -60,12 +60,7 @@ class TransactionRepository @Inject constructor(
                 }
             }
             
-            if (!response.isSuccessful) {
-                android.util.Log.e("TxRepo", "API error for ${network.name} (chainId=${network.chainId}): HTTP ${response.code()} ${response.message()}")
-                return@withContext
-            }
-
-            run {
+            if (response.isSuccessful) {
                 val body = response.body() ?: return@withContext
                 val entities = mutableListOf<TransactionEntity>()
                 
@@ -153,10 +148,6 @@ class TransactionRepository @Inject constructor(
                                     ))
                                 }
                             }
-                        } else {
-                            val msg = obj.get("message")?.asString ?: "unknown"
-                            val result = obj.get("result")?.asString ?: ""
-                            android.util.Log.w("TxRepo", "Etherscan status!=1 for ${network.name} (chainId=${network.chainId}): message=$msg result=$result")
                         }
                     }
                 }
