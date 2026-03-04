@@ -46,7 +46,10 @@ class TransactionRepository @Inject constructor(
                     )
                 }
                 else -> {
-                    // Etherscan style
+                    val isRoutescan = network.id == "base" || network.id == "op"
+                    val querySort = if (isRoutescan && startBlock.toInt() > 0) "asc" else "desc"
+                    val queryOffset = if (isRoutescan && startBlock.toInt() > 0) 100 else 50
+                    
                     explorerApi.getTransactionList(
                         url = network.explorerApiUrl,
                         action = action ?: (if (contractAddress != null) "tokentx" else "txlist"),
@@ -54,7 +57,8 @@ class TransactionRepository @Inject constructor(
                         contractaddress = contractAddress,
                         apikey = network.explorerApiKey.takeIf { it.isNotBlank() },
                         chainId = network.chainId,
-                        offset = 50,
+                        offset = queryOffset,
+                        sort = querySort,
                         startblock = startBlock.toInt()
                     )
                 }
