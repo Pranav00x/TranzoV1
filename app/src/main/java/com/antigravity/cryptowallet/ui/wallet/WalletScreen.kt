@@ -61,7 +61,8 @@ import javax.inject.Inject
 class WalletViewModel @Inject constructor(
     private val walletRepository: WalletRepository,
     private val assetRepository: AssetRepository,
-    private val networkRepository: NetworkRepository
+    private val networkRepository: NetworkRepository,
+    private val transactionRepository: com.antigravity.cryptowallet.data.wallet.TransactionRepository
 ) : ViewModel() {
     val address: String
         get() = walletRepository.getAddress(if (selectedNetworkId == "all") "eth" else selectedNetworkId)
@@ -137,22 +138,33 @@ class WalletViewModel @Inject constructor(
             assetRepository.refreshAssets()
             isRefreshing = false
         }
+        
+        // Background sync for transactions
+        viewModelScope.launch {
+            if (!walletRepository.isWalletCreated()) return@launch
+            networkRepository.networks.forEach { network ->
+                val addr = walletRepository.getAddress(network.id)
+                transactionRepository.refreshTransactions(addr, network, "txlist")
+                transactionRepository.refreshTransactions(addr, network, "tokentx")
+            }
+        }
     }
 
     private fun loadData() {
+        // Collect DB cached assets instantly to prevent blank screens
         viewModelScope.launch {
             if (!walletRepository.isWalletCreated()) return@launch
-            
-            // Collect assets
-            launch {
-                assetRepository.assets.collect { assetList ->
-                    allAssets = assetList
-                    updateDisplayedAssets()
-                }
+            assetRepository.assets.collect { assetList ->
+                allAssets = assetList
+                updateDisplayedAssets()
             }
-            
-            // Trigger initial refresh
-            refresh()
+        }
+        
+        // Trigger network fetch separately so it never blocks UI state
+        viewModelScope.launch(Dispatchers.IO) {
+            if (walletRepository.isWalletCreated()) {
+                refresh()
+            }
         }
     }
     
