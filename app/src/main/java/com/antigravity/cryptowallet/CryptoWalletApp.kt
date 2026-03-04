@@ -19,11 +19,11 @@ class CryptoWalletApp : Application() {
         val connectionType = ConnectionType.AUTOMATIC
         
         val appMetaData = Core.Model.AppMetaData(
-            name = "Antigravity Wallet",
+            name = "FlowStable Wallet",
             description = "A brutalist test crypto wallet",
             url = "https://flowstable.io",
             icons = listOf("https://cryptologos.cc/logos/cosmos-atom-logo.png"),
-            redirect = "antigravity://"
+            redirect = "flowstable://"
         )
         
         CoreClient.initialize(
