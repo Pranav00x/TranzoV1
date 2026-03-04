@@ -198,102 +198,104 @@ fun BrowserTopBar(
     activeNetworkName: String,
     onNetworkClick: () -> Unit
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        shadowElevation = 0.dp
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!isHome) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f),
-                        modifier = Modifier.clickable { onHome() }.size(48.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
-
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!isHome) {
                 Surface(
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f)
+                    shape = RoundedCornerShape(0.dp),
+                    color = Color.Transparent,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f)),
+                    modifier = Modifier.clickable { onHome() }.size(48.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f), modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        BasicTextField(
-                            value = currentUrl,
-                            onValueChange = onValueChange,
-                            singleLine = true,
-                            textStyle = TextStyle(
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = MaterialTheme.colorScheme.onBackground
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                            keyboardActions = KeyboardActions(onGo = { onGo() }),
-                            modifier = Modifier.weight(1f),
-                            decorationBox = { innerTextField ->
-                                if (currentUrl.isEmpty()) {
-                                    Text(
-                                        "Search or enter url...", 
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal)
-                                    )
-                                }
-                                innerTextField()
-                            },
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-                        )
-                        if (currentUrl.isNotEmpty()) {
-                             IconButton(
-                                 onClick = { onValueChange("") },
-                                 modifier = Modifier.size(24.dp)
-                             ) {
-                                 Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
-                             }
-                        }
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 }
-
                 Spacer(modifier = Modifier.width(12.dp))
+            }
 
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha=0.3f),
-                    modifier = Modifier
-                        .clickable { onNetworkClick() }
-                        .height(48.dp)
+            Surface(
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(0.dp),
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF4CAF50)))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            activeNetworkName, 
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
+                    Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
+                        value = currentUrl,
+                        onValueChange = onValueChange,
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                        keyboardActions = KeyboardActions(onGo = { onGo() }),
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { innerTextField ->
+                            if (currentUrl.isEmpty()) {
+                                Text(
+                                    "SEARCH OR ENTER URL", 
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                                    style = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+                                )
+                            }
+                            innerTextField()
+                        },
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+                    )
+                    if (currentUrl.isNotEmpty()) {
+                         IconButton(
+                             onClick = { onValueChange("") },
+                             modifier = Modifier.size(24.dp)
+                         ) {
+                             Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
+                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Surface(
+                shape = RoundedCornerShape(0.dp),
+                color = Color.Transparent,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f)),
+                modifier = Modifier
+                    .clickable { onNetworkClick() }
+                    .height(48.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50)))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        activeNetworkName.uppercase(), 
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
         }
+        Divider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), thickness = 1.dp)
     }
 }
 
@@ -312,19 +314,23 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
                     .padding(24.dp)
             ) {
                 Text(
-                    "Discover",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp
+                    "DISCOVER",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp
                     ),
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Explore the decentralized web securely.",
+                    "EXPLORE THE DECENTRALIZED WEB SECURELY.",
                     style = TextStyle(
-                        fontSize = 14.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
+                        letterSpacing = 1.sp
                     ),
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -333,10 +339,12 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
         
         item {
             Text(
-                "Featured dApps",
+                "FEATURED DAPPS",
                 style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 16.dp)
@@ -367,8 +375,9 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
 @Composable
 fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(0.dp),
+        color = Color.Transparent,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -379,34 +388,37 @@ fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface),
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.1f))
+                    .background(Color.Transparent),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
                     model = dapp.iconUrl,
                     contentDescription = dapp.name,
-                    modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.size(32.dp)
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                dapp.name,
+                dapp.name.uppercase(),
                 style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.5).sp
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                dapp.description,
+                dapp.description.uppercase(),
                 style = TextStyle(
-                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Normal,
-                    lineHeight = 16.sp
+                    lineHeight = 14.sp,
+                    letterSpacing = 0.5.sp
                 ),
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 maxLines = 2
