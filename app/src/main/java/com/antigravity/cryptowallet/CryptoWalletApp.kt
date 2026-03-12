@@ -14,8 +14,14 @@ class CryptoWalletApp : Application() {
         super.onCreate()
         
         // Initialize WalletConnect / Reown
-        val projectId = BuildConfig.WALLETCONNECT_PROJECT_ID.ifEmpty { "ef30a210ac76a0d4c98bcba35f3d3cb0" } // Fallback to placeholder if not set
-        val relayServerUrl = "wss://relay.walletconnect.com?projectId=\$projectId"
+        val projectId = BuildConfig.WALLETCONNECT_PROJECT_ID
+        if (projectId.isEmpty()) {
+            if (BuildConfig.DEBUG) {
+                println("WalletConnect disabled: WALLETCONNECT_PROJECT_ID is not set")
+            }
+            return
+        }
+        val relayServerUrl = "wss://relay.walletconnect.com?projectId=$projectId"
         val connectionType = ConnectionType.AUTOMATIC
         
         val appMetaData = Core.Model.AppMetaData(
@@ -32,11 +38,15 @@ class CryptoWalletApp : Application() {
             application = this,
             metaData = appMetaData
         ) { error ->
-            println("WalletConnect init error: \${error.throwable.stackTraceToString()}")
+            if (BuildConfig.DEBUG) {
+                println("WalletConnect init error: ${error.throwable.stackTraceToString()}")
+            }
         }
         
         Web3Wallet.initialize(Wallet.Params.Init(core = CoreClient)) { error ->
-            println("Web3Wallet init error: \${error.throwable.stackTraceToString()}")
+            if (BuildConfig.DEBUG) {
+                println("Web3Wallet init error: ${error.throwable.stackTraceToString()}")
+            }
         }
     }
 }

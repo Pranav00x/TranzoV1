@@ -19,6 +19,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import com.antigravity.cryptowallet.BuildConfig
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -66,7 +67,7 @@ object AppModule {
     @Singleton
     fun provideCoinGeckoApi(): CoinGeckoApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        logging.setLevel(if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE)
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
             .build()
@@ -83,7 +84,7 @@ object AppModule {
     @Singleton
     fun provideExplorerApi(): ExplorerApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        logging.setLevel(if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE)
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
             .build()
@@ -100,7 +101,7 @@ object AppModule {
     @Singleton
     fun provideAggregatorApi(): com.antigravity.cryptowallet.data.api.AggregatorApi {
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        logging.setLevel(if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE)
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
             .build()
