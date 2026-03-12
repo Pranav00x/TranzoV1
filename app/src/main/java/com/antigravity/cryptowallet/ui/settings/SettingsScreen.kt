@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
 import com.antigravity.cryptowallet.ui.components.BrutalistHeader
 import com.antigravity.cryptowallet.ui.theme.BrutalBlack
 import com.antigravity.cryptowallet.ui.theme.BrutalWhite
