@@ -225,7 +225,7 @@ fun BrowserTopBar(
             Surface(
                 modifier = Modifier.weight(1f).height(44.dp),
                 shape = RoundedCornerShape(22.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                 border = androidx.compose.foundation.BorderStroke(1.dp, outline)
             ) {
                 Row(
@@ -303,7 +303,7 @@ fun BrowserTopBar(
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     labelColor = onContainer
                 ),
                 border = FilterChipDefaults.filterChipBorder(
@@ -371,7 +371,7 @@ fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
@@ -579,7 +579,7 @@ fun Web3RequestDialog(
                     request.params
                 }
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
