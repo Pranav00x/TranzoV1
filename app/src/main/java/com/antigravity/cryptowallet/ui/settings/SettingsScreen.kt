@@ -1,27 +1,31 @@
 package com.antigravity.cryptowallet.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +44,8 @@ fun SettingsScreen(
     onManageWallets: () -> Unit,
     viewModel: SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,6 +110,30 @@ fun SettingsScreen(
                     subtitle = "Version & Info",
                     icon = Icons.Default.Info,
                     onClick = onViewAppInfo
+                )
+                SettingsItem(
+                    title = "Source code",
+                    subtitle = "Open GitHub repository",
+                    icon = Icons.Default.Code,
+                    onClick = {
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/FlowStablee/flowstable-android-test-wallet")
+                        )
+                        context.startActivity(intent)
+                    }
+                )
+                SettingsItem(
+                    title = "Contact support",
+                    subtitle = "Email pranav@flowstable.in",
+                    icon = Icons.Default.AlternateEmail,
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:pranav@flowstable.in")
+                            putExtra(Intent.EXTRA_SUBJECT, "FlowStable Android Wallet support")
+                        }
+                        context.startActivity(intent)
+                    }
                 )
             }
         }
