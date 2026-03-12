@@ -63,7 +63,7 @@ jobs:
         gradle-version: '8.4'
 
     - name: Build Debug APK
-      run: gradle assembleDebug --no-daemon
+      run: gradle clean assembleDebug --no-daemon --info --stacktrace
 
     - name: Prepare APK
       run: cp app/build/outputs/apk/debug/app-debug.apk FlowStable-Wallet-Latest.apk
