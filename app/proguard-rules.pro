@@ -10,3 +10,19 @@
 -dontwarn retrofit2.**
 -keep class org.bouncycastle.** { *; }
 -dontwarn org.bouncycastle.**
+
+# Strip logging and stack traces in release (smaller APK, no log leakage)
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** e(...);
+    public static *** println(...);
+}
+-assumenosideeffects class java.io.PrintStream {
+    public void println(...);
+}
+-assumenosideeffects class java.lang.Throwable {
+    public void printStackTrace(...);
+}

@@ -63,6 +63,7 @@ android {
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("localDebug") // For demo purposes
         }
@@ -146,7 +147,6 @@ dependencies {
     implementation(platform("com.walletconnect:android-bom:1.35.2"))
     implementation("com.walletconnect:android-core")
     implementation("com.walletconnect:web3wallet")
-    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // WorkManager (Background sync)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
