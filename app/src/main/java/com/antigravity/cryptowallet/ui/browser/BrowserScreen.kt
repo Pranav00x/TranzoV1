@@ -19,7 +19,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,19 +29,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.antigravity.cryptowallet.ui.components.BrutalistButton
+import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import coil.compose.AsyncImage
-import com.antigravity.cryptowallet.data.blockchain.Network
 
 data class DApp(
     val name: String,
@@ -55,29 +53,28 @@ data class DApp(
 fun BrowserScreen(
     viewModel: BrowserViewModel = hiltViewModel()
 ) {
-    val walletRepository = viewModel.walletRepository
     var url by remember { mutableStateOf("") }
     var inputUrl by remember { mutableStateOf("") }
     var webView: WebView? by remember { mutableStateOf(null) }
-    
+
     var activeNetwork by remember { mutableStateOf(viewModel.activeNetwork) }
-    val address = walletRepository.getAddress(activeNetwork.id)
-    
+    val address = viewModel.walletRepository.getAddress(activeNetwork.id)
+
     var pendingRequest by remember { mutableStateOf<Web3Bridge.Web3Request?>(null) }
     var bridgeInstance by remember { mutableStateOf<Web3Bridge?>(null) }
     var showNetworkSelector by remember { mutableStateOf(false) }
-    
+
     val scope = rememberCoroutineScope()
 
     val dapps = listOf(
-        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://cryptologos.cc/logos/pancakeswap-cake-logo.png", "DEFI", Color.Transparent),
-        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://cryptologos.cc/logos/uniswap-uni-logo.png", "DEFI", Color.Transparent),
+        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://cryptologos.cc/logos/pancakeswap-cake-logo.png", "DeFi", Color.Transparent),
+        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://cryptologos.cc/logos/uniswap-uni-logo.png", "DeFi", Color.Transparent),
         DApp("OpenSea", "NFT Marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png", "NFT", Color.Transparent),
-        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://cryptologos.cc/logos/1inch-1inch-logo.png", "DEFI", Color.Transparent),
-        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://cryptologos.cc/logos/aave-aave-logo.png", "DEFI", Color.Transparent),
+        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://cryptologos.cc/logos/1inch-1inch-logo.png", "DeFi", Color.Transparent),
+        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://cryptologos.cc/logos/aave-aave-logo.png", "DeFi", Color.Transparent),
         DApp("Blur", "NFT Exchange", "https://blur.io", "https://assets.coingecko.com/coins/images/28453/small/blur.png", "NFT", Color.Transparent),
-        DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DEFI", Color.Transparent),
-        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://cryptologos.cc/logos/lido-dao-ldo-logo.png", "DEFI", Color.Transparent)
+        DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DeFi", Color.Transparent),
+        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://cryptologos.cc/logos/lido-dao-ldo-logo.png", "DeFi", Color.Transparent)
     )
 
     BackHandler(enabled = url.isNotEmpty()) {
@@ -103,18 +100,19 @@ fun BrowserScreen(
                     url = ""
                     inputUrl = ""
                 },
+                onRefresh = { webView?.reload() },
                 isHome = url.isEmpty(),
                 activeNetworkName = activeNetwork.name,
                 onNetworkClick = { showNetworkSelector = true }
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             if (showNetworkSelector) {
                 NetworkSelector(
@@ -141,12 +139,8 @@ fun BrowserScreen(
             } else {
                 BrowserWebView(
                     url = url,
-                    onUpdateUrl = { newUrl -> 
-                        inputUrl = newUrl 
-                    },
-                    onWebViewCreated = { wv -> 
-                        webView = wv 
-                    },
+                    onUpdateUrl = { newUrl -> inputUrl = newUrl },
+                    onWebViewCreated = { wv -> webView = wv },
                     address = address,
                     chainIdProvider = { activeNetwork.chainId },
                     rpcUrlProvider = { activeNetwork.rpcUrl },
@@ -164,14 +158,12 @@ fun BrowserScreen(
             request = request,
             onConfirm = {
                 scope.launch {
-                    handleWeb3RequestAsync(request, bridgeInstance, walletRepository) { targetChainId ->
+                    handleWeb3RequestAsync(request, bridgeInstance, viewModel.walletRepository) { targetChainId ->
                         val targetNet = viewModel.networks.find { it.chainId == targetChainId }
-                         if (targetNet != null) {
+                        if (targetNet != null) {
                             viewModel.switchNetwork(targetNet.id)
                             activeNetwork = viewModel.activeNetwork
-                            webView?.post {
-                                webView?.reload()
-                            }
+                            webView?.post { webView?.reload() }
                             true
                         } else {
                             false
@@ -181,121 +173,145 @@ fun BrowserScreen(
                 pendingRequest = null
             },
             onReject = {
-                 bridgeInstance?.sendError(request.id, "User rejected")
-                 pendingRequest = null
+                bridgeInstance?.sendError(request.id, "User rejected")
+                pendingRequest = null
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserTopBar(
     currentUrl: String,
     onValueChange: (String) -> Unit,
     onGo: () -> Unit,
     onHome: () -> Unit,
+    onRefresh: () -> Unit,
     isHome: Boolean,
     activeNetworkName: String,
     onNetworkClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+    val containerColor = MaterialTheme.colorScheme.surface
+    val onContainer = MaterialTheme.colorScheme.onSurface
+    val outline = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+
+    Surface(
+        color = containerColor,
+        shadowElevation = 2.dp,
+        tonalElevation = 0.dp
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .height(48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!isHome) {
-                Surface(
-                    shape = RoundedCornerShape(0.dp),
-                    color = Color.Transparent,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f)),
-                    modifier = Modifier.clickable { onHome() }.size(48.dp)
+                IconButton(
+                    onClick = onHome,
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onBackground)
-                    }
+                    Icon(
+                        Icons.Default.Home,
+                        contentDescription = "Home",
+                        tint = onContainer
+                    )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
             }
 
             Surface(
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(0.dp),
-                color = Color.Transparent,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f))
+                modifier = Modifier.weight(1f).height(44.dp),
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, outline)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f), modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        Icons.Default.Language,
+                        contentDescription = null,
+                        tint = onContainer.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
                     BasicTextField(
                         value = currentUrl,
                         onValueChange = onValueChange,
                         singleLine = true,
                         textStyle = TextStyle(
                             fontSize = 14.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onBackground
+                            fontWeight = FontWeight.Medium,
+                            color = onContainer
                         ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = { onGo() }),
                         modifier = Modifier.weight(1f),
-                        decorationBox = { innerTextField ->
+                        decorationBox = { inner ->
                             if (currentUrl.isEmpty()) {
                                 Text(
-                                    "SEARCH OR ENTER URL", 
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                                    style = TextStyle(fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+                                    "Search or enter URL",
+                                    color = onContainer.copy(alpha = 0.5f),
+                                    fontSize = 14.sp
                                 )
                             }
-                            innerTextField()
+                            inner()
                         },
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                     )
                     if (currentUrl.isNotEmpty()) {
-                         IconButton(
-                             onClick = { onValueChange("") },
-                             modifier = Modifier.size(24.dp)
-                         ) {
-                             Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onBackground.copy(alpha=0.5f))
-                         }
+                        IconButton(
+                            onClick = { onValueChange("") },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = onContainer.copy(alpha = 0.6f))
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            Surface(
-                shape = RoundedCornerShape(0.dp),
-                color = Color.Transparent,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.2f)),
-                modifier = Modifier
-                    .clickable { onNetworkClick() }
-                    .height(48.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50)))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        activeNetworkName.uppercase(), 
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 1.sp
-                    )
+            if (!isHome) {
+                IconButton(onClick = onRefresh, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = onContainer)
                 }
+                Spacer(modifier = Modifier.width(4.dp))
             }
+
+            FilterChip(
+                selected = false,
+                onClick = onNetworkClick,
+                label = {
+                    Text(
+                        activeNetworkName,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
+                    )
+                },
+                leadingIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    labelColor = onContainer
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = outline,
+                    borderWidth = 1.dp
+                )
+            )
         }
-        Divider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f), thickness = 1.dp)
     }
 }
 
@@ -304,83 +320,60 @@ fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 100.dp)
+            .background(MaterialTheme.colorScheme.surface),
+        contentPadding = PaddingValues(24.dp, 16.dp, 24.dp, 100.dp)
     ) {
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                Text(
-                    "DISCOVER",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "EXPLORE THE DECENTRALIZED WEB SECURELY.",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
+            Text(
+                "Discover",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Explore dApps and the decentralized web",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
         }
-        
+
         item {
             Text(
-                "FEATURED DAPPS",
-                style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 16.dp)
+                "Featured dApps",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                modifier = Modifier.padding(bottom = 12.dp)
             )
         }
-        
-        items((dapps.size + 1) / 2) { rowIndex ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+
+        item {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                userScrollEnabled = false
             ) {
-                val idx1 = rowIndex * 2
-                val idx2 = idx1 + 1
-                
-                DAppCard(dapp = dapps[idx1], onClick = { onDappClick(dapps[idx1]) }, modifier = Modifier.weight(1f))
-                
-                if (idx2 < dapps.size) {
-                    DAppCard(dapp = dapps[idx2], onClick = { onDappClick(dapps[idx2]) }, modifier = Modifier.weight(1f))
-                } else {
-                    Spacer(modifier = Modifier.weight(1f)) 
+                items(dapps) { dapp ->
+                    DAppCard(dapp = dapp, onClick = { onDappClick(dapp) })
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
 fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        shape = RoundedCornerShape(0.dp),
-        color = Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -388,39 +381,29 @@ fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha=0.1f))
-                    .background(Color.Transparent),
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
                     model = dapp.iconUrl,
                     contentDescription = dapp.name,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(36.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
-                dapp.name.uppercase(),
-                style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
+                dapp.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
-                dapp.description.uppercase(),
-                style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Normal,
-                    lineHeight = 14.sp,
-                    letterSpacing = 0.5.sp
-                ),
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                dapp.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 2
             )
         }
@@ -445,22 +428,22 @@ fun BrowserWebView(
                 settings.databaseEnabled = true
                 settings.loadWithOverviewMode = true
                 settings.useWideViewPort = true
-                
+
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                 }
-                
+
                 val bridge = Web3Bridge(
-                    webView = this, 
-                    address = address, 
-                    chainIdProvider = chainIdProvider, 
+                    webView = this,
+                    address = address,
+                    chainIdProvider = chainIdProvider,
                     rpcUrlProvider = rpcUrlProvider
                 ) { request ->
                     onPendingRequest(request, this.tag as? Web3Bridge ?: return@Web3Bridge)
                 }
                 this.tag = bridge
                 addJavascriptInterface(bridge, "androidWallet")
-                
+
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
                         val urlStr = request?.url?.toString() ?: return false
@@ -470,19 +453,18 @@ fun BrowserWebView(
                                 context.startActivity(intent)
                                 return true
                             } catch (e: Exception) {
-                                e.printStackTrace()
-                                return true // Prevent WebView from showing an error for unsupported custom URL schemes
+                                return true
                             }
                         }
-                        return false // Let WebView load HTTP/HTTPS URLs
+                        return false
                     }
 
                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
-                         super.onPageStarted(view, url, favicon)
-                         val currentBridge = (view?.tag as? Web3Bridge) ?: bridge
-                         view?.evaluateJavascript(currentBridge.getInjectionJs(), null)
+                        super.onPageStarted(view, url, favicon)
+                        val currentBridge = (view?.tag as? Web3Bridge) ?: bridge
+                        view?.evaluateJavascript(currentBridge.getInjectionJs(), null)
                     }
-                    
+
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         if (url != null) onUpdateUrl(url)
@@ -490,7 +472,7 @@ fun BrowserWebView(
                         view?.evaluateJavascript(currentBridge.getInjectionJs(), null)
                     }
                 }
-                
+
                 loadUrl(url)
                 onWebViewCreated(this)
             }
@@ -507,64 +489,54 @@ fun NetworkSelector(
     onSelect: (com.antigravity.cryptowallet.data.blockchain.Network) -> Unit,
     onDismiss: () -> Unit
 ) {
-     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    "Select Network",
-                    style = TextStyle(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                )
-                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
-                    items(networks.size) { index ->
-                        val net = networks[index]
-                        Row(
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select network", fontWeight = FontWeight.SemiBold) },
+        text = {
+            LazyColumn(
+                modifier = Modifier.heightIn(max = 400.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(networks.size) { index ->
+                    val net = networks[index]
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onSelect(net) }
+                            .padding(vertical = 14.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onSelect(net) }
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                                    .background(if (net.id == activeNetworkId) Color(0xFF4CAF50) else Color.Transparent)
-                                    .border(1.dp, if (net.id == activeNetworkId) Color.Transparent else MaterialTheme.colorScheme.onSurface.copy(alpha=0.2f), CircleShape)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                net.name, 
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    fontWeight = if (net.id == activeNetworkId) FontWeight.Bold else FontWeight.Medium
-                                ),
-                                color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha=0.7f)
-                            )
-                        }
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (net.id == activeNetworkId) MaterialTheme.colorScheme.primary
+                                    else Color.Transparent
+                                )
+                                .border(
+                                    1.5.dp,
+                                    if (net.id == activeNetworkId) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                    CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            net.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (net.id == activeNetworkId) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        )
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
-                }
             }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done") }
         }
-    }
+    )
 }
 
 @Composable
@@ -573,57 +545,46 @@ fun Web3RequestDialog(
     onConfirm: () -> Unit,
     onReject: () -> Unit
 ) {
+    val title = when (request.method) {
+        "personal_sign", "eth_sign" -> "Sign message"
+        "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign typed data"
+        "eth_sendTransaction" -> "Confirm transaction"
+        "wallet_switchEthereumChain" -> "Switch network"
+        "eth_requestAccounts" -> "Connect wallet"
+        else -> "DApp request"
+    }
+
     AlertDialog(
         onDismissRequest = onReject,
-        title = { 
-            Text(
-                when(request.method) {
-                    "personal_sign", "eth_sign" -> "Sign Message"
-                    "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign Typed Data"
-                    "eth_sendTransaction" -> "Confirm Transaction"
-                    "wallet_switchEthereumChain" -> "Switch Network"
-                    "eth_requestAccounts" -> "Connection Request"
-                    else -> "DApp Request"
-                },
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            ) 
-        },
+        title = { Text(title, fontWeight = FontWeight.SemiBold) },
         text = {
             Column {
-                Text(
-                    "Method: ${request.method}", 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
-                )
+                Text("Method: ${request.method}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(12.dp))
-                
                 val displayParams = try {
                     if (request.method == "personal_sign" || request.method == "eth_sign") {
                         val paramsArray = org.json.JSONArray(request.params)
                         val rawMsg = paramsArray.getString(0)
                         if (rawMsg.startsWith("0x")) {
-                            "Decoded Message:\n" + String(org.web3j.utils.Numeric.hexStringToByteArray(rawMsg), Charsets.UTF_8)
+                            "Decoded:\n" + String(org.web3j.utils.Numeric.hexStringToByteArray(rawMsg), Charsets.UTF_8)
                         } else {
-                            "Message:\n$rawMsg"
+                            rawMsg
                         }
                     } else if (request.method == "eth_requestAccounts") {
-                        "Allow this DApp to connect to your wallet?"
+                        "Allow this dApp to connect to your wallet?"
                     } else {
                         request.params
                     }
                 } catch (e: Exception) {
                     request.params
                 }
-                
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(8.dp)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         displayParams.take(500) + if (displayParams.length > 500) "..." else "",
                         style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -631,20 +592,11 @@ fun Web3RequestDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) { 
-                Text("Confirm", fontWeight = FontWeight.Bold) 
-            }
+            Button(onClick = onConfirm) { Text("Confirm") }
         },
         dismissButton = {
-            TextButton(onClick = onReject) { 
-                Text("Reject", color = MaterialTheme.colorScheme.error) 
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp)
+            TextButton(onClick = onReject) { Text("Reject", color = MaterialTheme.colorScheme.error) }
+        }
     )
 }
 
@@ -655,81 +607,47 @@ private suspend fun handleWeb3RequestAsync(
     onSwitchNetwork: (Long) -> Boolean
 ) = withContext(Dispatchers.IO) {
     val credentials = walletRepository.activeCredentials ?: run {
-        withContext(Dispatchers.Main) {
-            bridge?.sendError(request.id, "Wallet not loaded")
-        }
+        withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Wallet not loaded") }
         return@withContext
     }
-    
+
     when (request.method) {
         "personal_sign", "eth_sign" -> {
             try {
                 val paramsArray = org.json.JSONArray(request.params)
                 var message = paramsArray.getString(0)
-                
-                // Handle out-of-spec DApps that pass address first instead of challenge
                 if (message.length == 42 && message.startsWith("0x") && paramsArray.length() > 1) {
                     val potentialMessage = paramsArray.getString(1)
-                    if (potentialMessage.length != 42) {
-                         message = potentialMessage
-                    }
+                    if (potentialMessage.length != 42) message = potentialMessage
                 }
-                
-                val data = if (message.startsWith("0x")) {
-                    org.web3j.utils.Numeric.hexStringToByteArray(message)
-                } else {
-                    message.toByteArray(Charsets.UTF_8)
-                }
+                val data = if (message.startsWith("0x")) org.web3j.utils.Numeric.hexStringToByteArray(message) else message.toByteArray(Charsets.UTF_8)
                 val signatureData = org.web3j.crypto.Sign.signPrefixedMessage(data, credentials.ecKeyPair)
-                
-                // Guarantee strictly exactly 64 chars of padding for r and s elements, and 2 for v
                 val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
                 val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
                 val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
-                val signature = "0x$r$s$v"
-                
-                withContext(Dispatchers.Main) {
-                    bridge?.sendResponse(request.id, "\"$signature\"")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"0x$r$s$v\"") }
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    bridge?.sendError(request.id, e.message ?: "Signing failed")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, e.message ?: "Signing failed") }
             }
         }
         "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> {
             try {
-                // For typed data, we need the data param (second param typically)
                 val paramsArray = org.json.JSONArray(request.params)
                 val typedData = if (paramsArray.length() > 1) paramsArray.getString(1) else paramsArray.getString(0)
-                
-                // Note: ideally we should use StructuredDataEncoder for EIP-712 hashing.
-                // However, standard sha3 over string fallback is kept for now unless encoder is available.
                 var signatureData: org.web3j.crypto.Sign.SignatureData? = null
                 try {
                     val encoder = org.web3j.crypto.StructuredDataEncoder(typedData)
-                    val hashInfo = encoder.hashStructuredData()
-                    signatureData = org.web3j.crypto.Sign.signMessage(hashInfo, credentials.ecKeyPair, false)
+                    signatureData = org.web3j.crypto.Sign.signMessage(encoder.hashStructuredData(), credentials.ecKeyPair, false)
                 } catch (ex: Exception) {
-                    val dataHash = org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8))
-                    signatureData = org.web3j.crypto.Sign.signMessage(dataHash, credentials.ecKeyPair, false)
+                    signatureData = org.web3j.crypto.Sign.signMessage(org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8)), credentials.ecKeyPair, false)
                 }
-                requireNotNull(signatureData) { "Signature data null" }
-                
+                requireNotNull(signatureData)
                 val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
                 val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
                 val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
-                val signature = "0x$r$s$v"
-                
-                withContext(Dispatchers.Main) {
-                    bridge?.sendResponse(request.id, "\"$signature\"")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"0x$r$s$v\"") }
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    bridge?.sendError(request.id, e.message ?: "Typed data signing failed")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, e.message ?: "Typed data signing failed") }
             }
         }
         "eth_requestAccounts" -> {
@@ -742,60 +660,29 @@ private suspend fun handleWeb3RequestAsync(
             try {
                 val paramsArray = org.json.JSONArray(request.params)
                 val paramObj = paramsArray.getJSONObject(0)
-                val targetChainIdHex = paramObj.getString("chainId")
-                val targetChainId = java.lang.Long.decode(targetChainIdHex)
-                
+                val targetChainId = java.lang.Long.decode(paramObj.getString("chainId"))
                 val success = onSwitchNetwork(targetChainId)
-                
                 withContext(Dispatchers.Main) {
-                    if (success) {
-                        bridge?.sendResponse(request.id, "null")
-                    } else {
-                        bridge?.sendError(request.id, "Chain ID $targetChainId not supported")
-                    }
+                    if (success) bridge?.sendResponse(request.id, "null")
+                    else bridge?.sendError(request.id, "Chain ID $targetChainId not supported")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    bridge?.sendError(request.id, "Switch failed: ${e.message}")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Switch failed: ${e.message}") }
             }
         }
         "eth_requestPermissions" -> {
-            withContext(Dispatchers.Main) {
-                bridge?.sendResponse(request.id, "[{\"parentCapability\": \"eth_accounts\"}]")
-            }
+            withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "[{\"parentCapability\": \"eth_accounts\"}]") }
         }
         "eth_sendTransaction" -> {
-            // For now, mock success - real implementation would build and send the transaction
-            // Parse params to get to, value, data etc and call blockchainService
             try {
                 val paramsArray = org.json.JSONArray(request.params)
                 val txObj = paramsArray.getJSONObject(0)
-                
-                // In a real implementation:
-                // val to = txObj.getString("to")
-                // val value = txObj.optString("value", "0x0")
-                // val data = txObj.optString("data", "0x")
-                // Then call blockchainService.sendRawTransaction(...)
-                
-                // For now, return mock hash
                 val mockHash = "0x" + (1..64).map { "abcdef0123456789".random() }.joinToString("")
-                
-                withContext(Dispatchers.Main) {
-                    bridge?.sendResponse(request.id, "\"$mockHash\"")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"$mockHash\"") }
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    bridge?.sendError(request.id, "Transaction failed: ${e.message}")
-                }
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Transaction failed: ${e.message}") }
             }
         }
-        else -> {
-            withContext(Dispatchers.Main) {
-                bridge?.sendError(request.id, "Method ${request.method} not supported")
-            }
-        }
+        else -> withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Method ${request.method} not supported") }
     }
 }
