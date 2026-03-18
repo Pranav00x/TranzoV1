@@ -1,5 +1,7 @@
 package com.antigravity.cryptowallet.ui.browser
 
+import android.webkit.JsResult
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
@@ -536,6 +538,17 @@ fun BrowserWebView(
                         // Always re-inject on finish as a safety net for SPAs
                         view?.evaluateJavascript(bridge.getInjectionJs(), null)
                     }
+                }
+
+                // WebChromeClient — required by dApps for JS dialogs, console, permissions
+                webChromeClient = object : WebChromeClient() {
+                    override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                        result?.confirm(); return true
+                    }
+                    override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                        result?.confirm(); return true
+                    }
+                    override fun onConsoleMessage(msg: android.webkit.ConsoleMessage?): Boolean = true
                 }
 
                 loadUrl(url)

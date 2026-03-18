@@ -79,7 +79,14 @@ fun WalletApp(
                 onNavigateToTokenDetail = { id -> navController.navigate("token_detail/$id") },
                 onNavigateToWalletConnect = { navController.navigate("wallet_connect") },
                 onNavigateToRevealPrivateKey = { navController.navigate("reveal_private_key_verify") },
-                onNavigateToWalletManager = { navController.navigate("wallet_manager") }
+                onNavigateToWalletManager = { navController.navigate("wallet_manager") },
+                onNavigateToSupport = { navController.navigate("support") }
+            )
+        }
+
+        composable("support") {
+            com.antigravity.cryptowallet.ui.settings.SupportScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
