@@ -1,8 +1,5 @@
 package com.antigravity.cryptowallet.ui.security
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -69,7 +66,7 @@ fun ShowSeedScreen(
                         }
                     }
                 }
-                AnimatedVisibility(visible = !revealed, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.matchParentSize()) {
+                if (!revealed) {
                     Box(
                         modifier = Modifier.matchParentSize().clip(RoundedCornerShape(12.dp)).background(Color(0xFF111111).copy(alpha = 0.88f)),
                         contentAlignment = Alignment.Center

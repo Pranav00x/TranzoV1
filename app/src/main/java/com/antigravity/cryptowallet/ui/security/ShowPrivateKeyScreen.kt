@@ -1,8 +1,5 @@
 package com.antigravity.cryptowallet.ui.security
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -67,7 +64,7 @@ fun ShowPrivateKeyScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     Box {
                         Text(text = fullKey, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color.White, lineHeight = 20.sp, modifier = Modifier.fillMaxWidth())
-                        AnimatedVisibility(visible = !revealed, enter = fadeIn(), exit = fadeOut()) {
+                        if (!revealed) {
                             Box(
                                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFF111111)).padding(vertical = 20.dp),
                                 contentAlignment = Alignment.Center
