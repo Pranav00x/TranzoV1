@@ -115,6 +115,9 @@ dependencies {
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
 
+    // WebKit (for addDocumentStartJavaScript early Web3 injection)
+    implementation("androidx.webkit:webkit:1.12.0")
+
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
 

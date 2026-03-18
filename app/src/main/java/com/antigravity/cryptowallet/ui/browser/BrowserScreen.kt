@@ -3,6 +3,8 @@ package com.antigravity.cryptowallet.ui.browser
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -472,7 +474,7 @@ fun BrowserWebView(
                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                 }
 
-                // Fix: capture bridge reference before callback fires
+                // Capture bridge ref before the callback can fire
                 var bridgeRef: Web3Bridge? = null
                 val bridge = Web3Bridge(
                     webView = this,
@@ -486,6 +488,16 @@ fun BrowserWebView(
                 bridgeRef = bridge
                 this.tag = bridge
                 addJavascriptInterface(bridge, "androidWallet")
+
+                // Inject window.ethereum BEFORE any dApp scripts run (API 24+).
+                // This is the only reliable way to ensure dApps see the provider.
+                if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    WebViewCompat.addDocumentStartJavaScript(
+                        this,
+                        bridge.getInjectionJs(),
+                        setOf("*")
+                    )
+                }
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -512,12 +524,16 @@ fun BrowserWebView(
                         favicon: android.graphics.Bitmap?
                     ) {
                         super.onPageStarted(view, url, favicon)
-                        view?.evaluateJavascript(bridge.getInjectionJs(), null)
+                        // Fallback injection for devices that don't support DOCUMENT_START_SCRIPT
+                        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                            view?.evaluateJavascript(bridge.getInjectionJs(), null)
+                        }
                     }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         if (url != null) onUpdateUrl(url)
+                        // Always re-inject on finish as a safety net for SPAs
                         view?.evaluateJavascript(bridge.getInjectionJs(), null)
                     }
                 }
@@ -765,9 +781,10 @@ private suspend fun handleWeb3RequestAsync(
                 withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Switch failed: ${e.message}") }
             }
         }
-        "eth_requestPermissions" -> {
+        "eth_requestPermissions", "wallet_requestPermissions" -> {
             withContext(Dispatchers.Main) {
-                bridge?.sendResponse(request.id, "[{\"parentCapability\": \"eth_accounts\"}]")
+                bridge?.sendResponse(request.id, "[{\"parentCapability\":\"eth_accounts\",\"caveats\":[{\"type\":\"filterResponse\",\"value\":[\"${credentials.address}\"]}]}]")
+                bridge?.emitEvent("accountsChanged", "[\"${credentials.address}\"]")
             }
         }
         "eth_sendTransaction" -> {
