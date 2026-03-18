@@ -30,7 +30,7 @@ class Web3Bridge(
                 const chainId = '0x${chainId.toString(16)}';
                 
                 window.ethereum = {
-                    isFlowStable: true,
+                    isTranzo: true,
                     isMetaMask: true,
                     isTrust: true,
                     isTrustWallet: true,
@@ -131,9 +131,9 @@ class Web3Bridge(
                 const announceProvider = () => {
                     const info = {
                         uuid: '3506709E-7589-4D86-BB79-CE5F528D6FBD',
-                        name: 'FlowStable Wallet',
+                        name: 'Tranzo Wallet',
                         icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwZmYwMCIgZD0iTTEyIDJMMiAyMmgyMGwtMTAtMjB6Ii8+PC9zdmc+',
-                        rdns: 'io.flowstable.wallet'
+                        rdns: 'io.tranzo.wallet'
                     };
                     window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {
                         detail: Object.freeze({ info: info, provider: window.ethereum })

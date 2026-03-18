@@ -18,3 +18,9 @@ basescan.api.key=YOUR_BASESCAN_KEY_HERE
 bscscan.api.key=YOUR_BSCSCAN_KEY_HERE
 polygonscan.api.key=YOUR_POLYGONSCAN_KEY_HERE
 optimismscan.api.key=YOUR_OPTIMISMSCAN_KEY_HERE
+
+# ==========================================
+# WalletConnect (Reown)
+# ==========================================
+# Get your project ID at https://cloud.reown.com
+walletconnect.project.id=YOUR_WALLETCONNECT_PROJECT_ID

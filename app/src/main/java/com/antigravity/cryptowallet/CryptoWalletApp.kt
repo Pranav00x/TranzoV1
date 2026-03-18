@@ -25,11 +25,11 @@ class CryptoWalletApp : Application() {
         val connectionType = ConnectionType.AUTOMATIC
         
         val appMetaData = Core.Model.AppMetaData(
-            name = "FlowStable Wallet",
-            description = "A brutalist test crypto wallet",
-            url = "https://flowstable.io",
+            name = "Tranzo Wallet",
+            description = "A non-custodial multi-chain Android wallet",
+            url = "https://github.com/Pranav00x/TranzoV1",
             icons = listOf("https://cryptologos.cc/logos/cosmos-atom-logo.png"),
-            redirect = "flowstable://"
+            redirect = "tranzo://"
         )
         
         CoreClient.initialize(
