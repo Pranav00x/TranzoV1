@@ -1,6 +1,6 @@
-## FlowStable Android Wallet
+## Tranzo Android Wallet
 
-FlowStable is a **non‑custodial, multi‑chain Android wallet** built with Jetpack Compose.
+Tranzo is a **non‑custodial, multi‑chain Android wallet** built with Jetpack Compose.
 
 It focuses on:
 
@@ -21,7 +21,7 @@ It focuses on:
   - Keys and mnemonics stored using `EncryptedSharedPreferences` + `MasterKey`
     (Android Keystore / TEE).
   - Create wallet (new seed) and import via **seed phrase** or **private key**.
-  - No keys or mnemonics are ever sent to a FlowStable backend.
+  - No keys or mnemonics are ever transmitted to any backend.
 
 - **Brutalist UI**
   - 100% Jetpack Compose (no XML layouts).
@@ -32,7 +32,7 @@ It focuses on:
   - Bottom‑tab `Browser` route in `MainScreen`.
   - Embedded `WebView` + custom `Web3Bridge` that exposes an EIP‑1193‑style
     `window.ethereum` to dApps.
-  - “Discover” screen with a curated grid of popular dApps
+  - "Discover" screen with a curated grid of popular dApps
     (Uniswap, PancakeSwap, OpenSea, 1inch, Aave, Blur, Raydium, Lido).
   - Network chip to switch between supported chains on the fly.
   - Modal confirmations for:
@@ -74,7 +74,7 @@ It focuses on:
     you explicitly approve via dialogs.
   - Signing and transaction‑sending flows always require in‑app confirmation.
 
-> This is a **test wallet / prototype**, not a production‑audited system.  
+> This is a **test wallet / prototype**, not a production‑audited system.
 > Use small amounts and test networks when experimenting.
 
 ---
@@ -111,8 +111,8 @@ It focuses on:
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/FlowStablee/flowstable-android-test-wallet.git
-cd flowstable-android-test-wallet
+git clone https://github.com/Pranav00x/TranzoV1.git
+cd TranzoV1
 ```
 
 ### 2. Configure secrets (local only)
@@ -159,15 +159,15 @@ Install on a device/emulator running Android 8.0 (API 26) or later.
 The workflow in `.github/workflows/android.yml`:
 
 - Triggers on every push to `master` and via manual `workflow_dispatch`.
-- Sets up JDK 17 and Gradle 8.4 (using `gradle/gradle-build-action@v2`).
+- Sets up JDK 17 and Gradle 8.4.
 - Runs:
 
 ```bash
-gradle clean assembleDebug --no-daemon --info --stacktrace
+./gradlew clean assembleDebug --no-daemon
 ```
 
-- Copies the generated debug APK to `FlowStable-Wallet-Latest.apk`.
-- Sends the APK to Telegram using `appleboy/telegram-action@v1.0.1`.
+- Copies the generated debug APK to `Tranzo-Wallet-Latest.apk`.
+- Sends the APK to Telegram using `appleboy/telegram-action`.
 - Uploads the APK as a GitHub Actions artifact.
 - On `master`, updates a `latest` GitHub Release with the new APK.
 - Sends Telegram messages with:
@@ -192,6 +192,5 @@ If you open a PR:
 
 ## License
 
-Licensed under the **MIT License**.  
+Licensed under the **MIT License**.
 See `LICENSE` for the full text.
-

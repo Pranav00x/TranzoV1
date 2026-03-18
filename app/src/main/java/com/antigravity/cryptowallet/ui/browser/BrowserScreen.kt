@@ -8,14 +8,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
@@ -29,8 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -67,14 +68,14 @@ fun BrowserScreen(
     val scope = rememberCoroutineScope()
 
     val dapps = listOf(
-        DApp("PancakeSwap", "Top DEX on BNB", "https://pancakeswap.finance", "https://cryptologos.cc/logos/pancakeswap-cake-logo.png", "DeFi", Color.Transparent),
-        DApp("Uniswap", "Swap anytime, anywhere", "https://app.uniswap.org", "https://cryptologos.cc/logos/uniswap-uni-logo.png", "DeFi", Color.Transparent),
-        DApp("OpenSea", "NFT Marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png", "NFT", Color.Transparent),
-        DApp("1inch", "DeFi Aggregator", "https://app.1inch.io", "https://cryptologos.cc/logos/1inch-1inch-logo.png", "DeFi", Color.Transparent),
-        DApp("Aave", "Liquidity Protocol", "https://app.aave.com", "https://cryptologos.cc/logos/aave-aave-logo.png", "DeFi", Color.Transparent),
-        DApp("Blur", "NFT Exchange", "https://blur.io", "https://assets.coingecko.com/coins/images/28453/small/blur.png", "NFT", Color.Transparent),
-        DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DeFi", Color.Transparent),
-        DApp("Lido", "Liquid Staking", "https://lido.fi", "https://cryptologos.cc/logos/lido-dao-ldo-logo.png", "DeFi", Color.Transparent)
+        DApp("Uniswap", "Swap tokens on Ethereum", "https://app.uniswap.org", "https://cryptologos.cc/logos/uniswap-uni-logo.png", "DEX", Color.Transparent),
+        DApp("PancakeSwap", "Top DEX on BNB Chain", "https://pancakeswap.finance", "https://cryptologos.cc/logos/pancakeswap-cake-logo.png", "DEX", Color.Transparent),
+        DApp("Aave", "Lend & borrow crypto", "https://app.aave.com", "https://cryptologos.cc/logos/aave-aave-logo.png", "Lending", Color.Transparent),
+        DApp("1inch", "Best swap rates", "https://app.1inch.io", "https://cryptologos.cc/logos/1inch-1inch-logo.png", "DEX", Color.Transparent),
+        DApp("OpenSea", "NFT marketplace", "https://opensea.io", "https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png", "NFT", Color.Transparent),
+        DApp("Blur", "Pro NFT trading", "https://blur.io", "https://assets.coingecko.com/coins/images/28453/small/blur.png", "NFT", Color.Transparent),
+        DApp("Lido", "Liquid staking", "https://lido.fi", "https://cryptologos.cc/logos/lido-dao-ldo-logo.png", "Staking", Color.Transparent),
+        DApp("Raydium", "Solana AMM", "https://raydium.io/", "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg", "DEX", Color.Transparent)
     )
 
     BackHandler(enabled = url.isNotEmpty()) {
@@ -106,28 +107,13 @@ fun BrowserScreen(
                 onNetworkClick = { showNetworkSelector = true }
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.surface)
         ) {
-            if (showNetworkSelector) {
-                NetworkSelector(
-                    networks = viewModel.networks,
-                    activeNetworkId = activeNetwork.id,
-                    onSelect = { net ->
-                        viewModel.switchNetwork(net.id)
-                        activeNetwork = viewModel.activeNetwork
-                        showNetworkSelector = false
-                        webView?.reload()
-                    },
-                    onDismiss = { showNetworkSelector = false }
-                )
-            }
-
             if (url.isEmpty()) {
                 BrowserHome(
                     dapps = dapps,
@@ -150,6 +136,20 @@ fun BrowserScreen(
                     }
                 )
             }
+
+            if (showNetworkSelector) {
+                NetworkSelector(
+                    networks = viewModel.networks,
+                    activeNetworkId = activeNetwork.id,
+                    onSelect = { net ->
+                        viewModel.switchNetwork(net.id)
+                        activeNetwork = viewModel.activeNetwork
+                        showNetworkSelector = false
+                        webView?.reload()
+                    },
+                    onDismiss = { showNetworkSelector = false }
+                )
+            }
         }
     }
 
@@ -165,9 +165,7 @@ fun BrowserScreen(
                             activeNetwork = viewModel.activeNetwork
                             webView?.post { webView?.reload() }
                             true
-                        } else {
-                            false
-                        }
+                        } else false
                     }
                 }
                 pendingRequest = null
@@ -192,62 +190,50 @@ fun BrowserTopBar(
     activeNetworkName: String,
     onNetworkClick: () -> Unit
 ) {
-    val containerColor = MaterialTheme.colorScheme.surface
-    val onContainer = MaterialTheme.colorScheme.onSurface
-    val outline = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+    val bg = MaterialTheme.colorScheme.surface
+    val fg = MaterialTheme.colorScheme.onSurface
+    val outline = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
 
-    Surface(
-        color = containerColor,
-        shadowElevation = 2.dp,
-        tonalElevation = 0.dp
-    ) {
+    Surface(color = bg, shadowElevation = 1.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-                .height(48.dp),
+                .statusBarsPadding()
+                .padding(horizontal = 10.dp, vertical = 8.dp)
+                .height(46.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!isHome) {
-                IconButton(
-                    onClick = onHome,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Home,
-                        contentDescription = "Home",
-                        tint = onContainer
-                    )
+                IconButton(onClick = onHome, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Home, contentDescription = "Home", tint = fg, modifier = Modifier.size(20.dp))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
             }
 
-            Surface(
-                modifier = Modifier.weight(1f).height(44.dp),
-                shape = RoundedCornerShape(22.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, outline)
+            // URL bar
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .border(1.dp, outline, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Language,
                         contentDescription = null,
-                        tint = onContainer.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp)
+                        tint = fg.copy(alpha = 0.4f),
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     BasicTextField(
                         value = currentUrl,
                         onValueChange = onValueChange,
                         singleLine = true,
-                        textStyle = TextStyle(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = onContainer
-                        ),
+                        textStyle = TextStyle(fontSize = 13.sp, color = fg, fontFamily = FontFamily.Monospace),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = { onGo() }),
                         modifier = Modifier.weight(1f),
@@ -255,8 +241,9 @@ fun BrowserTopBar(
                             if (currentUrl.isEmpty()) {
                                 Text(
                                     "Search or enter URL",
-                                    color = onContainer.copy(alpha = 0.5f),
-                                    fontSize = 14.sp
+                                    color = fg.copy(alpha = 0.4f),
+                                    fontSize = 13.sp,
+                                    fontFamily = FontFamily.Monospace
                                 )
                             }
                             inner()
@@ -264,147 +251,199 @@ fun BrowserTopBar(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                     )
                     if (currentUrl.isNotEmpty()) {
-                        IconButton(
-                            onClick = { onValueChange("") },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = onContainer.copy(alpha = 0.6f))
-                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear",
+                            tint = fg.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { onValueChange("") }
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             if (!isHome) {
                 IconButton(onClick = onRefresh, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = onContainer)
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = fg, modifier = Modifier.size(20.dp))
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
             }
 
-            FilterChip(
-                selected = false,
-                onClick = onNetworkClick,
-                label = {
-                    Text(
-                        activeNetworkName,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1
-                    )
-                },
-                leadingIcon = {
+            // Network chip
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                    .border(1.dp, outline, RoundedCornerShape(20.dp))
+                    .clickable { onNetworkClick() }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(6.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
                     )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    labelColor = onContainer
-                ),
-                border = FilterChipDefaults.filterChipBorder(
-                    borderColor = outline,
-                    borderWidth = 1.dp
-                )
-            )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = activeNetworkName,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = fg,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 fun BrowserHome(dapps: List<DApp>, onDappClick: (DApp) -> Unit) {
-    LazyColumn(
+    val scrollState = rememberScrollState()
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(24.dp, 16.dp, 24.dp, 100.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 20.dp)
+            .padding(top = 20.dp, bottom = 100.dp)
     ) {
-        item {
-            Text(
-                "Discover",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Explore dApps and the decentralized web",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+        // Header
+        Text(
+            "Discover",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontFamily = FontFamily.Monospace
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "Explore the decentralized web",
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            fontFamily = FontFamily.Monospace
+        )
 
-        item {
-            Text(
-                "Featured dApps",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-        }
+        Spacer(modifier = Modifier.height(24.dp))
 
-        item {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+        // Section label
+        Text(
+            "FEATURED DAPPS",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.sp
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Non-lazy 2-column grid — avoids the nested lazy crash
+        val chunked = dapps.chunked(2)
+        chunked.forEach { row ->
+            Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                userScrollEnabled = false
+                modifier = Modifier.fillMaxWidth()
             ) {
-                items(dapps) { dapp ->
-                    DAppCard(dapp = dapp, onClick = { onDappClick(dapp) })
+                row.forEach { dapp ->
+                    DAppCard(
+                        dapp = dapp,
+                        onClick = { onDappClick(dapp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // Fill empty slot if odd number
+                if (row.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
 fun DAppCard(dapp: DApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
+    val bg = MaterialTheme.colorScheme.surface
+    val fg = MaterialTheme.colorScheme.onSurface
+    val outline = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            .clip(RoundedCornerShape(14.dp))
+            .background(bg)
+            .border(1.dp, outline, RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(14.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
+        Column {
+            // Icon + category row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                AsyncImage(
-                    model = dapp.iconUrl,
-                    contentDescription = dapp.name,
-                    modifier = Modifier.size(36.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = dapp.iconUrl,
+                        contentDescription = dapp.name,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        dapp.category,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = fg.copy(alpha = 0.6f),
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 1.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Text(
                 dapp.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = fg,
+                fontFamily = FontFamily.Monospace,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 dapp.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                maxLines = 2
+                fontSize = 11.sp,
+                color = fg.copy(alpha = 0.55f),
+                fontFamily = FontFamily.Monospace,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 15.sp
             )
         }
     }
@@ -433,43 +472,53 @@ fun BrowserWebView(
                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                 }
 
+                // Fix: capture bridge reference before callback fires
+                var bridgeRef: Web3Bridge? = null
                 val bridge = Web3Bridge(
                     webView = this,
                     address = address,
                     chainIdProvider = chainIdProvider,
                     rpcUrlProvider = rpcUrlProvider
                 ) { request ->
-                    onPendingRequest(request, this.tag as? Web3Bridge ?: return@Web3Bridge)
+                    val b = bridgeRef ?: return@Web3Bridge
+                    onPendingRequest(request, b)
                 }
+                bridgeRef = bridge
                 this.tag = bridge
                 addJavascriptInterface(bridge, "androidWallet")
 
                 webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: android.webkit.WebResourceRequest?
+                    ): Boolean {
                         val urlStr = request?.url?.toString() ?: return false
                         if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
                             try {
-                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(urlStr))
+                                val intent = android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(urlStr)
+                                )
                                 context.startActivity(intent)
-                                return true
-                            } catch (e: Exception) {
-                                return true
-                            }
+                            } catch (_: Exception) {}
+                            return true
                         }
                         return false
                     }
 
-                    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                    override fun onPageStarted(
+                        view: WebView?,
+                        url: String?,
+                        favicon: android.graphics.Bitmap?
+                    ) {
                         super.onPageStarted(view, url, favicon)
-                        val currentBridge = (view?.tag as? Web3Bridge) ?: bridge
-                        view?.evaluateJavascript(currentBridge.getInjectionJs(), null)
+                        view?.evaluateJavascript(bridge.getInjectionJs(), null)
                     }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
                         if (url != null) onUpdateUrl(url)
-                        val currentBridge = (view?.tag as? Web3Bridge) ?: bridge
-                        view?.evaluateJavascript(currentBridge.getInjectionJs(), null)
+                        view?.evaluateJavascript(bridge.getInjectionJs(), null)
                     }
                 }
 
@@ -491,50 +540,64 @@ fun NetworkSelector(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select network", fontWeight = FontWeight.SemiBold) },
+        title = {
+            Text(
+                "Select Network",
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace
+            )
+        },
         text = {
             LazyColumn(
                 modifier = Modifier.heightIn(max = 400.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 items(networks.size) { index ->
                     val net = networks[index]
+                    val isActive = net.id == activeNetworkId
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                else Color.Transparent
+                            )
                             .clickable { onSelect(net) }
                             .padding(vertical = 14.dp, horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(10.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (net.id == activeNetworkId) MaterialTheme.colorScheme.primary
+                                    if (isActive) MaterialTheme.colorScheme.primary
                                     else Color.Transparent
                                 )
                                 .border(
                                     1.5.dp,
-                                    if (net.id == activeNetworkId) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                    if (isActive) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                                     CircleShape
                                 )
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Text(
                             net.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (net.id == activeNetworkId) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (net.id == activeNetworkId) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            fontSize = 14.sp,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Done") }
+            TextButton(onClick = onDismiss) {
+                Text("Done", fontFamily = FontFamily.Monospace)
+            }
         }
     )
 }
@@ -546,56 +609,85 @@ fun Web3RequestDialog(
     onReject: () -> Unit
 ) {
     val title = when (request.method) {
-        "personal_sign", "eth_sign" -> "Sign message"
-        "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign typed data"
-        "eth_sendTransaction" -> "Confirm transaction"
-        "wallet_switchEthereumChain" -> "Switch network"
-        "eth_requestAccounts" -> "Connect wallet"
-        else -> "DApp request"
+        "personal_sign", "eth_sign" -> "Sign Message"
+        "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign Typed Data"
+        "eth_sendTransaction" -> "Confirm Transaction"
+        "wallet_switchEthereumChain" -> "Switch Network"
+        "eth_requestAccounts" -> "Connect Wallet"
+        else -> "DApp Request"
     }
 
     AlertDialog(
         onDismissRequest = onReject,
-        title = { Text(title, fontWeight = FontWeight.SemiBold) },
+        title = {
+            Text(
+                title,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace
+            )
+        },
         text = {
             Column {
-                Text("Method: ${request.method}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(12.dp))
-                val displayParams = try {
-                    if (request.method == "personal_sign" || request.method == "eth_sign") {
-                        val paramsArray = org.json.JSONArray(request.params)
-                        val rawMsg = paramsArray.getString(0)
-                        if (rawMsg.startsWith("0x")) {
-                            "Decoded:\n" + String(org.web3j.utils.Numeric.hexStringToByteArray(rawMsg), Charsets.UTF_8)
-                        } else {
-                            rawMsg
-                        }
-                    } else if (request.method == "eth_requestAccounts") {
-                        "Allow this dApp to connect to your wallet?"
-                    } else {
-                        request.params
-                    }
-                } catch (e: Exception) {
-                    request.params
-                }
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(12.dp)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        displayParams.take(500) + if (displayParams.length > 500) "..." else "",
-                        style = MaterialTheme.typography.bodySmall,
+                        request.method,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val displayParams = try {
+                    when (request.method) {
+                        "personal_sign", "eth_sign" -> {
+                            val arr = org.json.JSONArray(request.params)
+                            val raw = arr.getString(0)
+                            if (raw.startsWith("0x"))
+                                "Decoded:\n" + String(org.web3j.utils.Numeric.hexStringToByteArray(raw), Charsets.UTF_8)
+                            else raw
+                        }
+                        "eth_requestAccounts" -> "Allow this dApp to view your wallet address?"
+                        else -> request.params
+                    }
+                } catch (_: Exception) { request.params }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        displayParams.take(500) + if (displayParams.length > 500) "…" else "",
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(12.dp)
+                        lineHeight = 18.sp
                     )
                 }
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm) { Text("Confirm") }
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Confirm", fontFamily = FontFamily.Monospace)
+            }
         },
         dismissButton = {
-            TextButton(onClick = onReject) { Text("Reject", color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = onReject) {
+                Text("Reject", color = MaterialTheme.colorScheme.error, fontFamily = FontFamily.Monospace)
+            }
         }
     )
 }
@@ -614,17 +706,20 @@ private suspend fun handleWeb3RequestAsync(
     when (request.method) {
         "personal_sign", "eth_sign" -> {
             try {
-                val paramsArray = org.json.JSONArray(request.params)
-                var message = paramsArray.getString(0)
-                if (message.length == 42 && message.startsWith("0x") && paramsArray.length() > 1) {
-                    val potentialMessage = paramsArray.getString(1)
-                    if (potentialMessage.length != 42) message = potentialMessage
+                val arr = org.json.JSONArray(request.params)
+                var message = arr.getString(0)
+                if (message.length == 42 && message.startsWith("0x") && arr.length() > 1) {
+                    val alt = arr.getString(1)
+                    if (alt.length != 42) message = alt
                 }
-                val data = if (message.startsWith("0x")) org.web3j.utils.Numeric.hexStringToByteArray(message) else message.toByteArray(Charsets.UTF_8)
-                val signatureData = org.web3j.crypto.Sign.signPrefixedMessage(data, credentials.ecKeyPair)
-                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
-                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
-                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
+                val data = if (message.startsWith("0x"))
+                    org.web3j.utils.Numeric.hexStringToByteArray(message)
+                else
+                    message.toByteArray(Charsets.UTF_8)
+                val sig = org.web3j.crypto.Sign.signPrefixedMessage(data, credentials.ecKeyPair)
+                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.r)).padStart(64, '0')
+                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.s)).padStart(64, '0')
+                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.v)).padStart(2, '0')
                 withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"0x$r$s$v\"") }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { bridge?.sendError(request.id, e.message ?: "Signing failed") }
@@ -632,22 +727,23 @@ private suspend fun handleWeb3RequestAsync(
         }
         "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> {
             try {
-                val paramsArray = org.json.JSONArray(request.params)
-                val typedData = if (paramsArray.length() > 1) paramsArray.getString(1) else paramsArray.getString(0)
-                var signatureData: org.web3j.crypto.Sign.SignatureData? = null
-                try {
-                    val encoder = org.web3j.crypto.StructuredDataEncoder(typedData)
-                    signatureData = org.web3j.crypto.Sign.signMessage(encoder.hashStructuredData(), credentials.ecKeyPair, false)
-                } catch (ex: Exception) {
-                    signatureData = org.web3j.crypto.Sign.signMessage(org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8)), credentials.ecKeyPair, false)
+                val arr = org.json.JSONArray(request.params)
+                val typedData = if (arr.length() > 1) arr.getString(1) else arr.getString(0)
+                val sig = try {
+                    val enc = org.web3j.crypto.StructuredDataEncoder(typedData)
+                    org.web3j.crypto.Sign.signMessage(enc.hashStructuredData(), credentials.ecKeyPair, false)
+                } catch (_: Exception) {
+                    org.web3j.crypto.Sign.signMessage(
+                        org.web3j.crypto.Hash.sha3(typedData.toByteArray(Charsets.UTF_8)),
+                        credentials.ecKeyPair, false
+                    )
                 }
-                requireNotNull(signatureData)
-                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.r)).padStart(64, '0')
-                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.s)).padStart(64, '0')
-                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(signatureData.v)).padStart(2, '0')
+                val r = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.r)).padStart(64, '0')
+                val s = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.s)).padStart(64, '0')
+                val v = org.web3j.utils.Numeric.cleanHexPrefix(org.web3j.utils.Numeric.toHexString(sig.v)).padStart(2, '0')
                 withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"0x$r$s$v\"") }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { bridge?.sendError(request.id, e.message ?: "Typed data signing failed") }
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, e.message ?: "Typed signing failed") }
             }
         }
         "eth_requestAccounts" -> {
@@ -658,31 +754,32 @@ private suspend fun handleWeb3RequestAsync(
         }
         "wallet_switchEthereumChain" -> {
             try {
-                val paramsArray = org.json.JSONArray(request.params)
-                val paramObj = paramsArray.getJSONObject(0)
-                val targetChainId = java.lang.Long.decode(paramObj.getString("chainId"))
+                val arr = org.json.JSONArray(request.params)
+                val targetChainId = java.lang.Long.decode(arr.getJSONObject(0).getString("chainId"))
                 val success = onSwitchNetwork(targetChainId)
                 withContext(Dispatchers.Main) {
                     if (success) bridge?.sendResponse(request.id, "null")
-                    else bridge?.sendError(request.id, "Chain ID $targetChainId not supported")
+                    else bridge?.sendError(request.id, "Chain $targetChainId not supported")
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Switch failed: ${e.message}") }
             }
         }
         "eth_requestPermissions" -> {
-            withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "[{\"parentCapability\": \"eth_accounts\"}]") }
+            withContext(Dispatchers.Main) {
+                bridge?.sendResponse(request.id, "[{\"parentCapability\": \"eth_accounts\"}]")
+            }
         }
         "eth_sendTransaction" -> {
             try {
-                val paramsArray = org.json.JSONArray(request.params)
-                val txObj = paramsArray.getJSONObject(0)
                 val mockHash = "0x" + (1..64).map { "abcdef0123456789".random() }.joinToString("")
                 withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"$mockHash\"") }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Transaction failed: ${e.message}") }
             }
         }
-        else -> withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Method ${request.method} not supported") }
+        else -> withContext(Dispatchers.Main) {
+            bridge?.sendError(request.id, "Method ${request.method} not supported")
+        }
     }
 }

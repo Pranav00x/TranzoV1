@@ -65,7 +65,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("localDebug") // For demo purposes
+            // WARNING: release builds must use a proper signing keystore, not the debug key.
+            // Configure RELEASE_STORE_FILE / RELEASE_KEY_ALIAS in local.properties before shipping.
+            signingConfig = signingConfigs.getByName("localDebug")
         }
     }
     lint {
@@ -133,8 +135,8 @@ dependencies {
     implementation("org.bitcoinj:bitcoinj-core:0.16.2")
     
     // Security
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("androidx.security:security-crypto:1.0.0")
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

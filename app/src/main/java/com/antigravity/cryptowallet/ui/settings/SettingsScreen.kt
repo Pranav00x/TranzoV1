@@ -119,19 +119,19 @@ fun SettingsScreen(
                     onClick = {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("https://github.com/FlowStablee/flowstable-android-test-wallet")
+                            Uri.parse("https://github.com/Pranav00x/TranzoV1")
                         )
                         context.startActivity(intent)
                     }
                 )
                 SettingsItem(
                     title = "Contact support",
-                    subtitle = "Email pranav@flowstable.in",
+                    subtitle = "Email support@tranzo.io",
                     icon = Icons.Default.AlternateEmail,
                     onClick = {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = Uri.parse("mailto:pranav@flowstable.in")
-                            putExtra(Intent.EXTRA_SUBJECT, "FlowStable Android Wallet support")
+                            data = Uri.parse("mailto:support@tranzo.io")
+                            putExtra(Intent.EXTRA_SUBJECT, "Tranzo Android Wallet support")
                         }
                         context.startActivity(intent)
                     }
