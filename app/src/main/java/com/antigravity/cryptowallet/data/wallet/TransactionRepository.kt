@@ -136,18 +136,19 @@ class TransactionRepository @Inject constructor(
                                     val timestamp = (tx.get("timeStamp")?.asLong ?: 0L) * 1000L
                                     val tokenSymbol = tx.get("tokenSymbol")?.asString ?: network.symbol
                                     val tokenDecimal = tx.get("tokenDecimal")?.asInt ?: network.decimals
-                                    entities.add(TransactionEntity(
-                                        hash = tx.get("hash")?.asString ?: "",
-                                        fromAddress = tx.get("from")?.asString ?: "",
-                                        toAddress = tx.get("to")?.asString ?: "",
-                                        value = BigDecimal(value).divide(BigDecimal.TEN.pow(tokenDecimal)).toPlainString(),
-                                        symbol = tokenSymbol,
-                                        timestamp = timestamp,
-                                        type = if (tx.get("from")?.asString?.lowercase() == address.lowercase()) "send" else "receive",
-                                        status = "success",
-                                        network = network.name,
-                                        blockNumber = tx.get("blockNumber")?.asLong ?: 0L
-                                    ))
+                                        entities.add(TransactionEntity(
+                                            hash = tx.get("hash")?.asString ?: "",
+                                            fromAddress = tx.get("from")?.asString ?: "",
+                                            toAddress = tx.get("to")?.asString ?: "",
+                                            value = BigDecimal(value).divide(BigDecimal.TEN.pow(tokenDecimal)).toPlainString(),
+                                            symbol = tokenSymbol,
+                                            timestamp = timestamp,
+                                            type = if (tx.get("from")?.asString?.lowercase() == address.lowercase()) "send" else "receive",
+                                            status = "success",
+                                            network = network.name,
+                                            blockNumber = tx.get("blockNumber")?.asLong ?: 0L
+                                        ))
+                                    }
                                 }
                             }
                         } else if (status == "0" && obj.get("message")?.asString?.contains("No transactions found", ignoreCase = true) == true) {
