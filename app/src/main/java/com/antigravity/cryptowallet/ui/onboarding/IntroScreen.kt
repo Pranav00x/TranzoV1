@@ -3,6 +3,10 @@ package com.antigravity.cryptowallet.ui.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -52,18 +56,19 @@ fun IntroScreen(
         Column {
             Spacer(modifier = Modifier.height(80.dp))
             
-            // Decorative Element
-            Box(
+            // Tranzo Icon
+            Image(
+                painter = painterResource(id = com.antigravity.cryptowallet.R.drawable.tranzo_icon),
+                contentDescription = null,
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .border(2.dp, onBg)
+                    .size(60.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "FLOWSTABLE",
+                text = "TRANZO",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary,

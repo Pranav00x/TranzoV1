@@ -80,7 +80,14 @@ fun WalletApp(
                 onNavigateToWalletConnect = { navController.navigate("wallet_connect") },
                 onNavigateToRevealPrivateKey = { navController.navigate("reveal_private_key_verify") },
                 onNavigateToWalletManager = { navController.navigate("wallet_manager") },
+                onNavigateToPairHardware = { navController.navigate("pair_hardware") },
                 onNavigateToSupport = { navController.navigate("support") }
+            )
+        }
+
+        composable("pair_hardware") {
+            com.antigravity.cryptowallet.ui.settings.PairHardwareScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

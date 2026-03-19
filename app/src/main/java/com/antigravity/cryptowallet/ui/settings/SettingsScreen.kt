@@ -32,6 +32,7 @@ fun SettingsScreen(
     onAppearance: () -> Unit,
     onWalletConnect: () -> Unit,
     onManageWallets: () -> Unit,
+    onPairHardware: () -> Unit,
     onNavigateToSupport: () -> Unit = {},
     viewModel: SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
@@ -54,6 +55,19 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
+
+        // ── Hardware ──────────────────────────────────────────────────────
+        item { SectionLabel("Hardware") }
+        item {
+            SettingsItem(
+                title = "Pair Tranzo Hardware",
+                subtitle = "Connect via Bluetooth (BLE)",
+                icon = Icons.Default.Bluetooth,
+                onClick = onPairHardware
+            )
+        }
+
+        item { Spacer(modifier = Modifier.height(8.dp)) }
 
         // ── Wallet ────────────────────────────────────────────────────────
         item { SectionLabel("Wallet") }
