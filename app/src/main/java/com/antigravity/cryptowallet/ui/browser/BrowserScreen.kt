@@ -127,18 +127,20 @@ fun BrowserScreen(
                     }
                 )
             } else {
-                BrowserWebView(
-                    url = url,
-                    onUpdateUrl = { newUrl -> inputUrl = newUrl },
-                    onWebViewCreated = { wv -> webView = wv },
-                    address = address,
-                    chainIdProvider = { activeNetwork.chainId },
-                    rpcUrlProvider = { activeNetwork.rpcUrl },
-                    onPendingRequest = { req, bridge ->
-                        pendingRequest = req
-                        bridgeInstance = bridge
-                    }
-                )
+                key(url) {
+                    BrowserWebView(
+                        url = url,
+                        onUpdateUrl = { newUrl -> inputUrl = newUrl },
+                        onWebViewCreated = { wv -> webView = wv },
+                        address = address,
+                        chainIdProvider = { activeNetwork.chainId },
+                        rpcUrlProvider = { activeNetwork.rpcUrl },
+                        onPendingRequest = { req, bridge ->
+                            pendingRequest = req
+                            bridgeInstance = bridge
+                        }
+                    )
+                }
             }
 
             if (showNetworkSelector) {
@@ -149,7 +151,17 @@ fun BrowserScreen(
                         viewModel.switchNetwork(net.id)
                         activeNetwork = viewModel.activeNetwork
                         showNetworkSelector = false
-                        webView?.reload()
+                        // Re-inject provider with new chain info and emit chainChanged
+                        val newChainHex = "0x${net.chainId.toString(16)}"
+                        webView?.let { wv ->
+                            val bridge = wv.tag as? Web3Bridge
+                            if (bridge != null) {
+                                wv.evaluateJavascript(bridge.getInjectionJs(), null)
+                                bridge.emitEvent("chainChanged", "\"$newChainHex\"")
+                            } else {
+                                wv.reload()
+                            }
+                        }
                     },
                     onDismiss = { showNetworkSelector = false }
                 )
@@ -162,12 +174,22 @@ fun BrowserScreen(
             request = request,
             onConfirm = {
                 scope.launch {
-                    handleWeb3RequestAsync(request, bridgeInstance, viewModel.walletRepository) { targetChainId ->
+                    handleWeb3RequestAsync(request, bridgeInstance, viewModel.walletRepository, viewModel.networkRepository) { targetChainId ->
                         val targetNet = viewModel.networks.find { it.chainId == targetChainId }
                         if (targetNet != null) {
                             viewModel.switchNetwork(targetNet.id)
                             activeNetwork = viewModel.activeNetwork
-                            webView?.post { webView?.reload() }
+                            // Re-inject provider + emit chainChanged instead of full reload
+                            val newChainHex = "0x${targetNet.chainId.toString(16)}"
+                            webView?.post {
+                                val bridge = webView?.tag as? Web3Bridge
+                                if (bridge != null) {
+                                    webView?.evaluateJavascript(bridge.getInjectionJs(), null)
+                                    bridge.emitEvent("chainChanged", "\"$newChainHex\"")
+                                } else {
+                                    webView?.reload()
+                                }
+                            }
                             true
                         } else false
                     }
@@ -642,6 +664,7 @@ fun Web3RequestDialog(
         "eth_signTypedData", "eth_signTypedData_v3", "eth_signTypedData_v4" -> "Sign Typed Data"
         "eth_sendTransaction" -> "Confirm Transaction"
         "wallet_switchEthereumChain" -> "Switch Network"
+        "wallet_addEthereumChain" -> "Add Network"
         "eth_requestAccounts" -> "Connect Wallet"
         else -> "DApp Request"
     }
@@ -725,6 +748,7 @@ private suspend fun handleWeb3RequestAsync(
     request: Web3Bridge.Web3Request,
     bridge: Web3Bridge?,
     walletRepository: com.antigravity.cryptowallet.data.wallet.WalletRepository,
+    networkRepository: com.antigravity.cryptowallet.data.blockchain.NetworkRepository,
     onSwitchNetwork: (Long) -> Boolean
 ) = withContext(Dispatchers.IO) {
     val credentials = walletRepository.activeCredentials ?: run {
@@ -798,6 +822,62 @@ private suspend fun handleWeb3RequestAsync(
             withContext(Dispatchers.Main) {
                 bridge?.sendResponse(request.id, "[{\"parentCapability\":\"eth_accounts\",\"caveats\":[{\"type\":\"filterResponse\",\"value\":[\"${credentials.address}\"]}]}]")
                 bridge?.emitEvent("accountsChanged", "[\"${credentials.address}\"]")
+            }
+        }
+        "wallet_addEthereumChain" -> {
+            try {
+                val arr = org.json.JSONArray(request.params)
+                val chainData = arr.getJSONObject(0)
+                val chainIdHex = chainData.getString("chainId")
+                val targetChainId = java.lang.Long.decode(chainIdHex)
+
+                // Check if we already support this chain
+                val existingNet = networkRepository.networks.find { it.chainId == targetChainId }
+                if (existingNet != null) {
+                    // Just switch to it
+                    val success = onSwitchNetwork(targetChainId)
+                    withContext(Dispatchers.Main) {
+                        if (success) bridge?.sendResponse(request.id, "null")
+                        else bridge?.sendError(request.id, "Switch failed")
+                    }
+                } else {
+                    // Add the new chain
+                    val chainName = chainData.optString("chainName", "Chain $targetChainId")
+                    val symbol = chainData.optJSONObject("nativeCurrency")?.optString("symbol", "ETH") ?: "ETH"
+                    val decimals = chainData.optJSONObject("nativeCurrency")?.optInt("decimals", 18) ?: 18
+                    val rpcUrls = chainData.optJSONArray("rpcUrls")
+                    val rpcUrl = if (rpcUrls != null && rpcUrls.length() > 0) rpcUrls.getString(0) else ""
+                    val explorers = chainData.optJSONArray("blockExplorerUrls")
+                    val explorerUrl = if (explorers != null && explorers.length() > 0) explorers.getString(0) else ""
+
+                    if (rpcUrl.isNotEmpty()) {
+                        val newId = "custom_$targetChainId"
+                        val newNetwork = com.antigravity.cryptowallet.data.blockchain.Network(
+                            id = newId,
+                            name = chainName,
+                            rpcUrl = rpcUrl,
+                            initialRpc = rpcUrl,
+                            chainId = targetChainId,
+                            symbol = symbol,
+                            coingeckoId = "",
+                            explorerApiUrl = explorerUrl,
+                            explorerApiKey = "",
+                            decimals = decimals
+                        )
+                        networkRepository.addNetwork(newNetwork)
+                        val success = onSwitchNetwork(targetChainId)
+                        withContext(Dispatchers.Main) {
+                            if (success) bridge?.sendResponse(request.id, "null")
+                            else bridge?.sendError(request.id, "Failed to add chain")
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            bridge?.sendError(request.id, "No RPC URL provided")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Add chain failed: ${e.message}") }
             }
         }
         "eth_sendTransaction" -> {

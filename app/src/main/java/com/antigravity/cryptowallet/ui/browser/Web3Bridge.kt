@@ -43,8 +43,14 @@ class Web3Bridge(
         else cb.resolve(result);
     };
 
-    // Don't re-create the provider if it is already ours.
-    if (window.ethereum && window.ethereum.isTranzo) return;
+    // If already injected, just update the chain/address and re-announce.
+    if (window.ethereum && window.ethereum.isTranzo) {
+        window.ethereum.chainId = '$chainIdHex';
+        window.ethereum.networkVersion = String($chainId);
+        window.ethereum.selectedAddress = '$safeAddress';
+        window.ethereum._chainIdDec = $chainId;
+        return;
+    }
 
     var _listeners = {};
     var _address = '$safeAddress';
@@ -151,6 +157,17 @@ class Web3Bridge(
         },
         off: function(event, cb) { return this.removeListener(event, cb); },
         emit: function(event, data) {
+            // Keep internal state in sync when events fire
+            if (event === 'chainChanged' && typeof data === 'string') {
+                _chainId = data;
+                _chainIdDec = parseInt(data, 16);
+                provider.chainId = _chainId;
+                provider.networkVersion = String(_chainIdDec);
+            }
+            if (event === 'accountsChanged' && Array.isArray(data) && data.length > 0) {
+                _address = data[0];
+                provider.selectedAddress = _address;
+            }
             if (_listeners[event]) _listeners[event].forEach(function(cb) { try { cb(data); } catch(_) {} });
         },
         once: function(event, cb) {
@@ -221,6 +238,7 @@ class Web3Bridge(
                     "eth_requestPermissions",
                     "wallet_requestPermissions",
                     "wallet_switchEthereumChain",
+                    "wallet_addEthereumChain",
                     "eth_sendTransaction",
                     "eth_sendRawTransaction",
                     "personal_sign",
