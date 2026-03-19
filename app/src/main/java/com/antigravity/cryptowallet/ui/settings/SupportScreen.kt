@@ -175,6 +175,20 @@ fun SupportScreen(onBack: () -> Unit) {
                 icon = Icons.Default.Code,
                 context = context
             )
+            LinkItem(
+                label = "Terms of Service",
+                value = "tranzo.money/terms",
+                url = "https://tranzo.money/terms",
+                icon = Icons.Default.Gavel,
+                context = context
+            )
+            LinkItem(
+                label = "Privacy Policy",
+                value = "tranzo.money/privacy",
+                url = "https://tranzo.money/privacy",
+                icon = Icons.Default.Shield,
+                context = context
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 

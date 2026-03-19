@@ -1,6 +1,5 @@
 package com.antigravity.cryptowallet.ui.browser
 
-import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.gson.Gson
 import org.json.JSONObject
@@ -31,8 +30,6 @@ class Web3Bridge(
 (function() {
     'use strict';
 
-    // Always ensure the callback registry and RPC handler exist,
-    // even if ethereum was already injected (e.g. re-injection after SPA nav).
     if (!window.__tranzoCallbacks) window.__tranzoCallbacks = {};
 
     window.__tranzoOnRpcResponse = function(id, result, error) {
@@ -43,7 +40,6 @@ class Web3Bridge(
         else cb.resolve(result);
     };
 
-    // If already injected, just update the chain/address and re-announce.
     if (window.ethereum && window.ethereum.isTranzo) {
         window.ethereum.chainId = '$chainIdHex';
         window.ethereum.networkVersion = String($chainId);
@@ -59,7 +55,7 @@ class Web3Bridge(
 
     var provider = {
         isTranzo: true,
-        isMetaMask: true,           // broad dApp compat
+        isMetaMask: true,
         isTrust: true,
         isTrustWallet: true,
         networkVersion: String(_chainIdDec),
@@ -72,7 +68,6 @@ class Web3Bridge(
             var method = payload.method;
             var params = payload.params || [];
 
-            // ── Read-only RPC passthrough ──────────────────────────────────
             var readMethods = [
                 'eth_call','eth_estimateGas','eth_gasPrice','eth_maxPriorityFeePerGas',
                 'eth_blockNumber','eth_getBalance','eth_getCode','eth_getStorageAt',
@@ -97,22 +92,25 @@ class Web3Bridge(
                 });
             }
 
-            // ── Synchronous answers ───────────────────────────────────────
             if (method === 'eth_chainId')   return Promise.resolve(_chainId);
             if (method === 'net_version')   return Promise.resolve(String(_chainIdDec));
             if (method === 'eth_accounts')  return Promise.resolve(_address ? [_address] : []);
             if (method === 'eth_coinbase')  return Promise.resolve(_address || null);
 
-            // ── Wallet action – route to Android ─────────────────────────
             return new Promise(function(resolve, reject) {
                 var id = String(Math.floor(Math.random() * 1e9));
                 window.__tranzoCallbacks[id] = { resolve: resolve, reject: reject };
                 try {
-                    window.androidWallet.postMessage(JSON.stringify({
-                        method: method,
-                        params: params,
-                        id: id
-                    }));
+                    // Use the secure WebMessagePort bridge
+                    if (window.tranzo && window.tranzo.postMessage) {
+                        window.tranzo.postMessage(JSON.stringify({
+                            method: method,
+                            params: params,
+                            id: id
+                        }));
+                    } else {
+                        throw new Error('Tranzo secure bridge handshake failed');
+                    }
                 } catch(e) {
                     delete window.__tranzoCallbacks[id];
                     reject(new Error('Bridge unavailable: ' + e.message));
@@ -120,12 +118,10 @@ class Web3Bridge(
             });
         },
 
-        // Legacy enable()
         enable: function() {
             return this.request({ method: 'eth_requestAccounts' });
         },
 
-        // Legacy sendAsync / send
         sendAsync: function(payload, callback) {
             this.request(payload)
                 .then(function(r) { callback(null, { id: payload.id, jsonrpc: '2.0', result: r }); })
@@ -139,7 +135,6 @@ class Web3Bridge(
             if (typeof payload === 'string') {
                 return this.request({ method: payload, params: callback || [] });
             }
-            // Synchronous subset
             if (payload.method === 'eth_accounts')  return { id: payload.id, jsonrpc:'2.0', result: _address ? [_address] : [] };
             if (payload.method === 'eth_chainId')   return { id: payload.id, jsonrpc:'2.0', result: _chainId };
             if (payload.method === 'net_version')   return { id: payload.id, jsonrpc:'2.0', result: String(_chainIdDec) };
@@ -157,7 +152,6 @@ class Web3Bridge(
         },
         off: function(event, cb) { return this.removeListener(event, cb); },
         emit: function(event, data) {
-            // Keep internal state in sync when events fire
             if (event === 'chainChanged' && typeof data === 'string') {
                 _chainId = data;
                 _chainIdDec = parseInt(data, 16);
@@ -181,7 +175,6 @@ class Web3Bridge(
         }
     };
 
-    // Expose as window.ethereum
     try {
         Object.defineProperty(window, 'ethereum', {
             value: provider,
@@ -192,7 +185,6 @@ class Web3Bridge(
         window.ethereum = provider;
     }
 
-    // Legacy window.web3 shim
     window.web3 = {
         currentProvider: provider,
         eth: {
@@ -202,7 +194,6 @@ class Web3Bridge(
         }
     };
 
-    // EIP-6963 provider announcement
     function announceProvider() {
         var detail = Object.freeze({
             info: Object.freeze({
@@ -224,8 +215,7 @@ class Web3Bridge(
         """.trimIndent()
     }
 
-    @JavascriptInterface
-    fun postMessage(json: String) {
+    fun handleMessage(json: String) {
         try {
             val obj = JSONObject(json)
             val method = obj.getString("method")

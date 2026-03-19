@@ -2,9 +2,12 @@ package com.antigravity.cryptowallet.ui.browser
 
 import android.webkit.JsResult
 import android.webkit.WebChromeClient
+import android.webkit.WebMessagePort
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.webkit.WebMessageCompat
+import androidx.webkit.WebMessageListener
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import androidx.compose.foundation.background
@@ -511,7 +514,21 @@ fun BrowserWebView(
                 }
                 bridgeRef = bridge
                 this.tag = bridge
-                addJavascriptInterface(bridge, "androidWallet")
+
+                // Use the new secure WebMessageListener
+                if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+                    WebViewCompat.addWebMessageListener(
+                        this,
+                        "tranzo",
+                        setOf("*"),
+                        WebViewCompat.WebMessageListener { _, message, _, _, _ ->
+                            val data = message.data
+                            if (data != null) {
+                                bridge.handleMessage(data)
+                            }
+                        }
+                    )
+                }
 
                 // Inject window.ethereum BEFORE any dApp scripts run (API 24+).
                 // This is the only reliable way to ensure dApps see the provider.

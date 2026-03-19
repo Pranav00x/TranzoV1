@@ -1,9 +1,12 @@
 package com.antigravity.cryptowallet.ui.onboarding
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
@@ -12,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.antigravity.cryptowallet.ui.components.BrutalistButton
@@ -27,6 +32,7 @@ fun IntroScreen(
     onCreateWallet: () -> Unit,
     onImportWallet: () -> Unit
 ) {
+    val context = LocalContext.current
     val onBg = MaterialTheme.colorScheme.onBackground
     
     Column(
@@ -98,7 +104,7 @@ fun IntroScreen(
 
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(bottom = 48.dp)
+            modifier = Modifier.padding(bottom = 40.dp)
         ) {
             BrutalistButton(
                 text = "Create New Wallet",
@@ -110,13 +116,44 @@ fun IntroScreen(
                 inverted = true
             )
             
-            Text(
-                text = "By continuing you agree to the Terms of Service",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray,
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "By continuing you agree to the",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Terms of Service",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://tranzo.money/terms")))
+                        }
+                    )
+                    Text(
+                        text = "&",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray,
+                    )
+                    Text(
+                        text = "Privacy Policy",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://tranzo.money/privacy")))
+                        }
+                    )
+                }
+            }
         }
     }
 }
