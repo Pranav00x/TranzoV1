@@ -8,17 +8,22 @@ interface ExplorerApi {
     @GET
     suspend fun getTransactionList(
         @retrofit2.http.Url url: String,
-        @Query("module") module: String = "account",
-        @Query("action") action: String = "txlist",
+        @Query("module") module: String? = "account",
+        @Query("action") action: String? = "txlist",
         @Query("address") address: String,
         @Query("contractaddress") contractaddress: String? = null,
-        @Query("startblock") startblock: Int = 0,
-        @Query("endblock") endblock: Int = 99999999,
-        @Query("page") page: Int = 1,
-        @Query("offset") offset: Int = 20,
-        @Query("sort") sort: String = "desc",
+        @Query("startblock") startblock: Long? = 0,
+        @Query("endblock") endblock: Long? = 99999999,
+        @Query("page") page: Int? = 1,
+        @Query("offset") offset: Int? = 20,
+        @Query("sort") sort: String? = "desc",
         @Query("apikey") apikey: String? = null,
         @Query("chainid") chainId: Long? = null
+    ): retrofit2.Response<com.google.gson.JsonElement>
+
+    @GET
+    suspend fun getRawJson(
+        @retrofit2.http.Url url: String
     ): retrofit2.Response<com.google.gson.JsonElement>
 }
 

@@ -37,16 +37,25 @@ class HistoryViewModel @Inject constructor(
         _selectedNetworkName.value = name
     }
 
+    private var isRefreshing = false
     fun refresh() {
+        if (isRefreshing) return
         viewModelScope.launch {
-            if (!walletRepository.isWalletCreated()) return@launch
-            
-            networkRepository.networks.forEach { network ->
-                val address = walletRepository.getAddress(network.id)
-                // Refresh native transactions
-                repository.refreshTransactions(address, network, action = "txlist")
-                // Refresh all token transactions for this address
-                repository.refreshTransactions(address, network, action = "tokentx")
+            isRefreshing = true
+            try {
+                if (!walletRepository.isWalletCreated()) return@launch
+                
+                networkRepository.networks.forEach { network ->
+                    val address = walletRepository.getAddress(network.id)
+                    // Refresh native transactions
+                    repository.refreshTransactions(address, network, action = "txlist")
+                    delay(500) // Small delay between calls to avoid rate limits
+                    // Refresh all token transactions for this address
+                    repository.refreshTransactions(address, network, action = "tokentx")
+                    delay(1000) // Stagger between networks
+                }
+            } finally {
+                isRefreshing = false
             }
         }
     }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonArray
+import android.util.Log
 import java.math.BigDecimal
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,31 +28,25 @@ class TransactionRepository @Inject constructor(
         if (address.isBlank()) return@withContext
         try {
             val maxBlock = transactionDao.getMaxBlockNumber(network.name) ?: 0L
-            val startBlock = if (maxBlock > 0) String.format("%d", maxBlock + 1) else "0"
+            val startBlock = maxBlock + 1
             
             val response = when (network.id) {
                 "btc" -> {
-                    // https://mempool.space/api/address/ADDRESS/txs
-                    explorerApi.getTransactionList(
-                        url = "${network.explorerApiUrl}/address/$address/txs",
-                        address = address // Dummy, but required by method signature
-                    )
+                    // Raw fetch to avoid Etherscan query params
+                    explorerApi.getRawJson(url = "${network.explorerApiUrl}/address/$address/txs")
                 }
                 "trx" -> {
-                    // https://apilist.tronscan.org/api/transaction?address=ADDRESS&limit=50
-                    explorerApi.getTransactionList(
-                        url = "${network.explorerApiUrl}/transaction",
-                        address = address,
-                        offset = 50
-                    )
+                    // TronScan uses limit in the URL
+                    explorerApi.getRawJson(url = "${network.explorerApiUrl}/transaction?address=$address&limit=50")
                 }
                 else -> {
                     val isRoutescan = network.id == "base" || network.id == "op"
-                    val querySort = if (isRoutescan && startBlock.toInt() > 0) "asc" else "desc"
-                    val queryOffset = if (isRoutescan && startBlock.toInt() > 0) 100 else 50
+                    val querySort = if (isRoutescan && startBlock > 0) "asc" else "desc"
+                    val queryOffset = if (isRoutescan && startBlock > 0) 100 else 50
                     
                     explorerApi.getTransactionList(
                         url = network.explorerApiUrl,
+                        module = "account",
                         action = action ?: (if (contractAddress != null) "tokentx" else "txlist"),
                         address = address,
                         contractaddress = contractAddress,
@@ -59,7 +54,7 @@ class TransactionRepository @Inject constructor(
                         chainId = network.chainId,
                         offset = queryOffset,
                         sort = querySort,
-                        startblock = startBlock.toInt()
+                        startblock = startBlock
                     )
                 }
             }
@@ -129,10 +124,13 @@ class TransactionRepository @Inject constructor(
                     else -> {
                         // EVM / Etherscan style (Object with "result" array)
                         val obj = body.asJsonObject
-                        if (obj.get("status")?.asString == "1") {
-                            val resultArray = obj.getAsJsonArray("result")
-                            resultArray?.forEach { element ->
-                                if (element.isJsonObject) {
+                        val status = obj.get("status")?.asString ?: "0"
+                        if (status == "1") {
+                            val result = obj.get("result")
+                            if (result != null && result.isJsonArray) {
+                                val resultArray = result.asJsonArray
+                                resultArray.forEach { element ->
+                                    if (element.isJsonObject) {
                                     val tx = element.asJsonObject
                                     val value = tx.get("value")?.asString ?: "0"
                                     val timestamp = (tx.get("timeStamp")?.asLong ?: 0L) * 1000L
@@ -152,6 +150,10 @@ class TransactionRepository @Inject constructor(
                                     ))
                                 }
                             }
+                        } else if (status == "0" && obj.get("message")?.asString?.contains("No transactions found", ignoreCase = true) == true) {
+                            // Valid response but no transactions
+                        } else {
+                            android.util.Log.e("TransactionRepo", "API Error for ${network.name}: ${obj.get("message")?.asString}")
                         }
                     }
                 }
