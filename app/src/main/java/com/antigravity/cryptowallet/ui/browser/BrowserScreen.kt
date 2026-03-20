@@ -494,6 +494,13 @@ fun BrowserWebView(
                 settings.databaseEnabled = true
                 settings.loadWithOverviewMode = true
                 settings.useWideViewPort = true
+                settings.setSupportMultipleWindows(false)
+                settings.allowContentAccess = true
+                settings.javaScriptCanOpenWindowsAutomatically = true
+
+                // Set User-Agent to Chrome mobile so DApps render full UI (token selectors, modals)
+                val defaultUA = settings.userAgentString
+                settings.userAgentString = defaultUA.replace("; wv", "") + " Chrome/120.0.0.0 Mobile"
 
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
@@ -818,6 +825,9 @@ private suspend fun handleWeb3RequestAsync(
             withContext(Dispatchers.Main) {
                 bridge?.sendResponse(request.id, "[\"${credentials.address}\"]")
                 bridge?.emitEvent("accountsChanged", "[\"${credentials.address}\"]")
+                // Also emit connect event — many DApps listen for this
+                val chainHex = "0x${bridge?.let { it.chainIdProvider() }?.toString(16) ?: "1"}"
+                bridge?.emitEvent("connect", "{\"chainId\":\"$chainHex\"}")
             }
         }
         "wallet_switchEthereumChain" -> {
@@ -897,9 +907,68 @@ private suspend fun handleWeb3RequestAsync(
         }
         "eth_sendTransaction" -> {
             try {
-                val mockHash = "0x" + (1..64).map { "abcdef0123456789".random() }.joinToString("")
-                withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"$mockHash\"") }
+                val arr = org.json.JSONArray(request.params)
+                val txObj = arr.getJSONObject(0)
+                val to = txObj.optString("to", "")
+                val data = txObj.optString("data", "0x")
+                val valueHex = txObj.optString("value", "0x0")
+                val valueWei = try {
+                    java.math.BigInteger(valueHex.removePrefix("0x"), 16)
+                } catch (_: Exception) { java.math.BigInteger.ZERO }
+
+                val rpcUrl = bridge?.rpcUrlProvider?.invoke() ?: ""
+                val chainId = bridge?.chainIdProvider?.invoke() ?: 1L
+
+                // Build Web3j instance to get nonce, gas price, estimate gas
+                val web3j = org.web3j.protocol.Web3j.build(
+                    org.web3j.protocol.http.HttpService(rpcUrl)
+                )
+
+                val nonce = web3j.ethGetTransactionCount(
+                    credentials.address,
+                    org.web3j.protocol.core.DefaultBlockParameterName.PENDING
+                ).send().transactionCount
+
+                val gasPrice = web3j.ethGasPrice().send().gasPrice
+
+                // Estimate gas
+                val estimateTx = org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
+                    credentials.address, nonce, gasPrice, null, to, valueWei, data
+                )
+                val gasLimitEstimate = try {
+                    val est = web3j.ethEstimateGas(estimateTx).send()
+                    if (est.hasError()) java.math.BigInteger.valueOf(200_000)
+                    else est.amountUsed.multiply(java.math.BigInteger.valueOf(130)).divide(java.math.BigInteger.valueOf(100)) // +30% buffer
+                } catch (_: Exception) { java.math.BigInteger.valueOf(200_000) }
+
+                // Use DApp-provided gasLimit if present and higher
+                val gasLimitHex = txObj.optString("gas", txObj.optString("gasLimit", ""))
+                val dappGasLimit = if (gasLimitHex.isNotBlank()) {
+                    try { java.math.BigInteger(gasLimitHex.removePrefix("0x"), 16) } catch (_: Exception) { null }
+                } else null
+                val gasLimit = if (dappGasLimit != null && dappGasLimit > gasLimitEstimate) dappGasLimit else gasLimitEstimate
+
+                // Create and sign the raw transaction
+                val rawTransaction = if (data == "0x" || data.isBlank()) {
+                    org.web3j.crypto.RawTransaction.createEtherTransaction(nonce, gasPrice, gasLimit, to, valueWei)
+                } else {
+                    org.web3j.crypto.RawTransaction.createTransaction(nonce, gasPrice, gasLimit, to, valueWei, data)
+                }
+
+                val signedMessage = org.web3j.crypto.TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
+                val hexValue = org.web3j.utils.Numeric.toHexString(signedMessage)
+
+                val ethSendTx = web3j.ethSendRawTransaction(hexValue).send()
+                val txHash = ethSendTx.transactionHash
+
+                if (txHash != null) {
+                    withContext(Dispatchers.Main) { bridge?.sendResponse(request.id, "\"$txHash\"") }
+                } else {
+                    val errMsg = ethSendTx.error?.message ?: "Transaction broadcast failed"
+                    withContext(Dispatchers.Main) { bridge?.sendError(request.id, errMsg) }
+                }
             } catch (e: Exception) {
+                e.printStackTrace()
                 withContext(Dispatchers.Main) { bridge?.sendError(request.id, "Transaction failed: ${e.message}") }
             }
         }

@@ -7,8 +7,8 @@ import org.json.JSONObject
 class Web3Bridge(
     private val webView: WebView,
     private val address: String,
-    private val chainIdProvider: () -> Long,
-    private val rpcUrlProvider: () -> String,
+    internal val chainIdProvider: () -> Long,
+    internal val rpcUrlProvider: () -> String,
     private val onActionRequest: (Web3Request) -> Unit
 ) {
     private val gson = Gson()
@@ -62,6 +62,14 @@ class Web3Bridge(
         chainId: _chainId,
         selectedAddress: _address,
         _listeners: _listeners,
+        _connected: true,
+        supportsSubscriptions: false,
+
+        isConnected: function() { return true; },
+
+        _metamask: {
+            isUnlocked: function() { return Promise.resolve(true); }
+        },
 
         request: function(payload) {
             var self = this;
@@ -74,7 +82,9 @@ class Web3Bridge(
                 'eth_getTransactionCount','eth_getTransactionReceipt',
                 'eth_getTransactionByHash','eth_getLogs','eth_feeHistory',
                 'eth_getBlockByNumber','eth_getBlockByHash','eth_getBlockReceipts',
-                'eth_getProof','eth_syncing','eth_protocolVersion'
+                'eth_getProof','eth_syncing','eth_protocolVersion',
+                'eth_createAccessList','eth_blobBaseFee',
+                'eth_sendRawTransaction'
             ];
             if (readMethods.indexOf(method) !== -1) {
                 return fetch('$rpcUrl', {
@@ -96,6 +106,8 @@ class Web3Bridge(
             if (method === 'net_version')   return Promise.resolve(String(_chainIdDec));
             if (method === 'eth_accounts')  return Promise.resolve(_address ? [_address] : []);
             if (method === 'eth_coinbase')  return Promise.resolve(_address || null);
+            if (method === 'wallet_getPermissions') return Promise.resolve([{parentCapability:'eth_accounts'}]);
+            if (method === 'web3_clientVersion') return Promise.resolve('TranzoWallet/1.0.0');
 
             return new Promise(function(resolve, reject) {
                 var id = String(Math.floor(Math.random() * 1e9));
@@ -211,6 +223,13 @@ class Web3Bridge(
     announceProvider();
     window.dispatchEvent(new Event('ethereum#initialized'));
 
+    // Emit connect event so DApps know provider is ready
+    setTimeout(function() {
+        if (provider.emit) {
+            provider.emit('connect', { chainId: _chainId });
+        }
+    }, 100);
+
 })();
         """.trimIndent()
     }
@@ -230,7 +249,6 @@ class Web3Bridge(
                     "wallet_switchEthereumChain",
                     "wallet_addEthereumChain",
                     "eth_sendTransaction",
-                    "eth_sendRawTransaction",
                     "personal_sign",
                     "eth_sign",
                     "eth_signTypedData",
@@ -238,10 +256,17 @@ class Web3Bridge(
                     "eth_signTypedData_v4" -> {
                         onActionRequest(Web3Request(rawId, method, params))
                     }
+                    // eth_sendRawTransaction is a read-like RPC call; forward it to the node
+                    "eth_sendRawTransaction" -> {
+                        // Already-signed tx from the DApp – relay directly to the RPC node
+                        // This is NOT handled via dialog; it's pre-signed data
+                        sendResponse(rawId, "null") // Placeholder; JS side handles via fetch
+                    }
                     "eth_accounts" -> sendResponse(rawId, "[\"$address\"]")
                     "eth_chainId"  -> sendResponse(rawId, "\"0x${chainIdProvider().toString(16)}\"")
                     "net_version"  -> sendResponse(rawId, "\"${chainIdProvider()}\"")
                     "eth_coinbase" -> sendResponse(rawId, "\"$address\"")
+                    "wallet_getPermissions" -> sendResponse(rawId, "[{\"parentCapability\":\"eth_accounts\"}]")
                     else           -> sendResponse(rawId, "null")
                 }
             }
